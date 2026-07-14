@@ -18,7 +18,7 @@ function flavorText(outcome: FlightOutcome): string {
   }
   switch (outcome.failedAt) {
     case "launch":
-      return "The engine sputters and stalls — Meow-gor never leaves the counter.";
+      return "The engine sputters and stalls — Meow-gor never leaves the floor.";
     case "midflight":
       return "Structural failure mid-air! The frame shears apart and Meow-gor crashes into the wall.";
     case "landing":
