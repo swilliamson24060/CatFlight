@@ -1,0 +1,227 @@
+body {
+  font-family: system-ui, sans-serif;
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  color: #222;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-bottom: 1.5rem;
+}
+
+th, td {
+  border: 1px solid #ccc;
+  padding: 0.4rem 0.6rem;
+  text-align: left;
+  font-size: 0.9rem;
+}
+
+th {
+  background: #f0f0f0;
+}
+
+.phase-shell {
+  padding: 2rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+.phase-label {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.8rem;
+  color: #666;
+  margin: 0 0 0.5rem;
+}
+
+.phase-shell h1 {
+  margin-top: 0;
+}
+
+.phase-shell button {
+  margin-top: 1.5rem;
+  padding: 0.6rem 1.2rem;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.countertop {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.counter-item {
+  padding: 0.4rem 0.7rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  border: 1px solid #999;
+  border-radius: 4px;
+  background: #fff;
+  margin-top: 0;
+}
+
+.counter-item:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.message {
+  color: #b00020;
+  font-weight: 600;
+}
+
+.success {
+  color: #1a7a3a;
+  font-weight: 600;
+}
+
+.grid {
+  display: grid;
+  gap: 3px;
+  max-width: 320px;
+  margin-bottom: 1rem;
+}
+
+.cell {
+  aspect-ratio: 1;
+  border: 1px solid #bbb;
+  background: #fff;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  font-size: 0;
+}
+
+.cell.filled {
+  background: #8bc9a8;
+  border-color: #4c9a6f;
+}
+
+.craft-preview {
+  max-width: 320px;
+  margin: 1rem 0;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #eef1f0;
+}
+
+.craft-preview svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.bins {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.bin {
+  flex: 1;
+  min-width: 140px;
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.bin h3 {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+}
+
+.bin-option {
+  display: block;
+  width: 100%;
+  margin: 0 0 0.4rem;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  border: 1px solid #999;
+  border-radius: 4px;
+  background: #f7f7f7;
+  text-align: left;
+}
+
+.bin-option.selected {
+  background: #8bc9a8;
+  border-color: #4c9a6f;
+  font-weight: 600;
+}
+
+.phase-shell button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.scrap-balance {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.upgrades {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.upgrade-card {
+  flex: 1;
+  min-width: 180px;
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.upgrade-card h3 {
+  margin: 0 0 0.4rem;
+  font-size: 0.95rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.upgrade-level {
+  font-weight: 400;
+  color: #666;
+  font-size: 0.8rem;
+}
+
+.upgrade-card button {
+  margin-top: 0.5rem;
+  padding: 0.4rem 0.7rem;
+  font-size: 0.85rem;
+}
+
+.share-section {
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fff;
+  margin: 1rem 0;
+}
+
+.share-section code {
+  background: #f0f0f0;
+  padding: 0.15rem 0.4rem;
+  border-radius: 3px;
+  font-size: 0.9rem;
+}
+
+.share-section button {
+  margin-top: 0.5rem;
+  margin-right: 0.5rem;
+  padding: 0.4rem 0.7rem;
+  font-size: 0.85rem;
+}

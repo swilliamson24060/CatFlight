@@ -1,0 +1,318 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2822
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;\f1\fswiss\fcharset0 Helvetica-Bold;\f2\fnil\fcharset0 AppleColorEmoji;
+\f3\fswiss\fcharset0 Helvetica-Oblique;\f4\fnil\fcharset77 ZapfDingbatsITC;\f5\fnil\fcharset0 LucidaGrande;
+\f6\fnil\fcharset128 HiraginoSans-W3;}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;\red183\green187\blue184;}
+{\*\expandedcolortbl;;\cssrgb\c0\c0\c0;\cssrgb\c76863\c78039\c77255;}
+{\*\listtable{\list\listtemplateid1\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{disc\}}{\leveltext\leveltemplateid1\'01\uc0\u8226 ;}{\levelnumbers;}\fi-360\li720\lin720 }{\listname ;}\listid1}
+{\list\listtemplateid2\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{disc\}}{\leveltext\leveltemplateid101\'01\uc0\u8226 ;}{\levelnumbers;}\fi-360\li720\lin720 }{\listname ;}\listid2}
+{\list\listtemplateid3\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{disc\}}{\leveltext\leveltemplateid201\'01\uc0\u8226 ;}{\levelnumbers;}\fi-360\li720\lin720 }{\listname ;}\listid3}
+{\list\listtemplateid4\listhybrid{\listlevel\levelnfc0\levelnfcn0\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{decimal\}}{\leveltext\leveltemplateid301\'01\'00;}{\levelnumbers\'01;}\fi-360\li720\lin720 }{\listname ;}\listid4}
+{\list\listtemplateid5\listhybrid{\listlevel\levelnfc0\levelnfcn0\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{decimal\}}{\leveltext\leveltemplateid401\'01\'00;}{\levelnumbers\'01;}\fi-360\li720\lin720 }{\listname ;}\listid5}
+{\list\listtemplateid6\listhybrid{\listlevel\levelnfc0\levelnfcn0\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{decimal\}}{\leveltext\leveltemplateid501\'01\'00;}{\levelnumbers\'01;}\fi-360\li720\lin720 }{\listname ;}\listid6}
+{\list\listtemplateid7\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{disc\}}{\leveltext\leveltemplateid601\'01\uc0\u8226 ;}{\levelnumbers;}\fi-360\li720\lin720 }{\listname ;}\listid7}}
+{\*\listoverridetable{\listoverride\listid1\listoverridecount0\ls1}{\listoverride\listid2\listoverridecount0\ls2}{\listoverride\listid3\listoverridecount0\ls3}{\listoverride\listid4\listoverridecount0\ls4}{\listoverride\listid5\listoverridecount0\ls5}{\listoverride\listid6\listoverridecount0\ls6}{\listoverride\listid7\listoverridecount0\ls7}}
+\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\deftab720
+\pard\pardeftab720\sa240\partightenfactor0
+
+\f0\fs24 \cf0 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Here is the comprehensive Game Design Document (GDD) for 
+\f1\b "Cat Flight"
+\f0\b0  designed for a lightweight, modular web framework.\
+\pard\pardeftab720\sa321\partightenfactor0
+
+\f2\fs48 \cf0 \uc0\u55357 \u56369 
+\f1\b  GAME DESIGN DOCUMENT: CAT FLIGHT\
+\pard\pardeftab720\sa298\partightenfactor0
+
+\fs36 \cf0 1. Executive Summary & Vibe\
+\pard\tx220\tx720\pardeftab720\li720\fi-720\sa240\partightenfactor0
+\ls1\ilvl0
+\fs24 \cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Title:
+\f0\b0  Cat Flight\
+\ls1\ilvl0
+\f1\b \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Platform:
+\f0\b0  Web App (HTML5 / Mobile Browsers / PC)\
+\ls1\ilvl0
+\f1\b \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Target Session Length:
+\f0\b0  2 to 3 minutes\
+\ls1\ilvl0
+\f1\b \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Genre:
+\f0\b0  Casual Spatial Puzzle / Strategy Crafting\
+\ls1\ilvl0
+\f1\b \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Visual Style:
+\f0\b0  Comic-book panel art style for menus and intermissions; clean vector-based modular shapes for gameplay.\
+\pard\pardeftab720\sa298\partightenfactor0
+
+\f1\b\fs36 \cf0 2. Narrative, Characters & Flow\
+\pard\pardeftab720\sa280\partightenfactor0
+
+\fs28 \cf0 Introduction (The Onboarding)\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\f0\b0\fs24 \cf0 When launching the app for the first time, players read a fast, 3-panel digital comic slide:\
+\pard\tx220\tx720\pardeftab720\li720\fi-720\sa240\partightenfactor0
+\ls2\ilvl0
+\f1\b \cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Panel 1:
+\f0\b0  Igor (renamed 
+\f1\b Meow-gor
+\f0\b0 , a hefty cat) is staring intensely up at a plate of wet food on top of a towering refrigerator. A speech bubble reads: 
+\f3\i "The rules say NO counters... but they never said anything about airspace."
+\f0\i0 \
+\ls2\ilvl0
+\f1\b \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Panel 2:
+\f0\b0  Enter 
+\f1\b Doc Frankie
+\f0\b0 , a pocket-protector-wearing rat holding a tiny welding torch. Speech bubble: 
+\f3\i "If we're going up, we're going up in style. Build me a frame, Meow-gor, and I'll wire the engines."
+\f0\i0 \
+\ls2\ilvl0
+\f1\b \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Panel 3:
+\f0\b0  Quick gameplay diagram showing how to drag items onto a grid and synthesize them into wing mechanics.\
+\pard\pardeftab720\sa280\partightenfactor0
+
+\f1\b\fs28 \cf0 The Intermission (Between-Round Loop)\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\f0\b0\fs24 \cf0 Every round concludes with a brief, randomized 2-panel comic critique between Meow-gor and Doc Frankie based entirely on the flight's telemetry results, immediately followed by the 
+\f1\b Test Flight Simulation
+\f0\b0 .\
+\pard\pardeftab720\sa298\partightenfactor0
+
+\f1\b\fs36 \cf0 3. Core Gameplay Systems\
+\pard\pardeftab720\partightenfactor0
+
+\f0\b0\fs24 \cf0 +-------------------------------------------------------------+\
+| STAGE 1: SCAVENGE & GRID   
+\f4 \uc0\u10132 
+\f0    STAGE 2: RECIPE SYNTHESIS   |\
+| (Point-and-Click / Sorting)    (Alchemist Matrix Checkout)  |\
++-------------------------------------------------------------+\
+                              \uc0\u9474 \
+                              
+\f5 \uc0\u9660 
+\f0 \
++-------------------------------------------------------------+\
+| STAGE 4: BASE UPGRADES     
+\f6 \uc0\u9664 
+\f0    STAGE 3: FLIGHT SIM & SALVAGE|\
+| (Mousehole Meta-Progression)   (Visual Payoff / Stat-Check) |\
++-------------------------------------------------------------+\
+\pard\pardeftab720\sa280\partightenfactor0
+
+\f1\b\fs28 \cf0 Phase 1: The Tactical Salvage & Grid Scavenger\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\f0\b0\fs24 \cf0 The player is presented with a messy kitchen countertop or pantry shelf. It is a 
+\f1\b point-and-click hidden-object phase with a strict grid restriction.
+\f0\b0 \
+\pard\tx220\tx720\pardeftab720\li720\fi-720\sa240\partightenfactor0
+\ls3\ilvl0
+\f1\b \cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 The Constraint:
+\f0\b0  You have a fixed $5 \\times 5$ grid inventory box.\
+\ls3\ilvl0
+\f1\b \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 The Tactic:
+\f0\b0  Items have varying sizes. A broom handle takes a $1 \\times 4$ line; a bottle cap takes a $1 \\times 1$ tile. You must rotate and arrange items to fit as many useful objects as possible.\
+\ls3\ilvl0
+\f1\b \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Red Herrings (The Strategy Buffer):
+\f0\b0  The countertop is intentionally cluttered with heavy, useless junk (e.g., an iron skillet, a soggy sponge, a crumpled napkin) that takes up massive grid space but has completely terrible stats. The player must think for a few seconds before blindly clicking an object: 
+\f3\i "Do I really want to waste a $3 \\times 3$grid space on this heavy ceramic mug just because it's shiny, or should I hold out for a $1 \\times 2$ battery?"
+\f0\i0 \
+\pard\pardeftab720\sa280\partightenfactor0
+
+\f1\b\fs28 \cf0 Phase 2: The Alchemist\'92s Kitchen (Synthesis)\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\f0\b0\fs24 \cf0 Once the player fills their grid, they hit "Go to Workbench." They drop their items into category bins to reveal or execute a formula blueprint.\
+\pard\pardeftab720\sa298\partightenfactor0
+
+\f1\b\fs36 \cf0 4. The Content Matrix (Assets & Rarity)\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\f0\b0\fs24 \cf0 To avoid animation bloat, components use a 
+\f1\b Modular Asset System
+\f0\b0 . Sprites use simple gray templates that are dynamically dynamically color-tinted and textured via code.\
+\pard\pardeftab720\sa280\partightenfactor0
+
+\f1\b\fs28 \cf0 Base Skeletons (4 Wing Profiles)\
+\pard\tx220\tx720\pardeftab720\li720\fi-720\sa240\partightenfactor0
+\ls4\ilvl0
+\fs24 \cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	1	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 The Glider Frame:
+\f0\b0  Rigid horizontal layout. Needs low weight to drift.\
+\ls4\ilvl0
+\f1\b \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	2	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 The Flapper Frame:
+\f0\b0  Segmented mechanical hinges. Balanced layout.\
+\ls4\ilvl0
+\f1\b \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	3	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 The Rocket Rig:
+\f0\b0  Stubby, swept-back triangular mount. High thrust tolerance.\
+\ls4\ilvl0
+\f1\b \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	4	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 The Rotor/Chute:
+\f0\b0  Overhead horizontal fan profile. High drag tolerance.\
+\pard\pardeftab720\sa280\partightenfactor0
+
+\f1\b\fs28 \cf0 Textures & Skins (4 Material Profiles)\
+\pard\tx220\tx720\pardeftab720\li720\fi-720\sa240\partightenfactor0
+\ls5\ilvl0
+\fs24 \cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	1	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Cardboard:
+\f0\b0  Zero weight, zero durability.\
+\ls5\ilvl0
+\f1\b \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	2	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Plastic Wrap:
+\f0\b0  Low weight, low durability.\
+\ls5\ilvl0
+\f1\b \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	3	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Aluminum Foil:
+\f0\b0  Medium weight, medium durability.\
+\ls5\ilvl0
+\f1\b \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	4	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Baking Sheet Metal:
+\f0\b0  Extreme weight, max durability.\
+\pard\pardeftab720\sa280\partightenfactor0
+
+\f1\b\fs28 \cf0 Powerplants (4 Engine Components)\
+\pard\tx220\tx720\pardeftab720\li720\fi-720\sa240\partightenfactor0
+\ls6\ilvl0
+\fs24 \cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	1	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Rubber Band Sling:
+\f0\b0  Low thrust, quiet.\
+\ls6\ilvl0
+\f1\b \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	2	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Baking Soda/Mustard Bottle Jet:
+\f0\b0  Medium thrust, corrosive.\
+\ls6\ilvl0
+\f1\b \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	3	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Diet Soda & Mentos Core:
+\f0\b0  High thrust, unstable.\
+\ls6\ilvl0
+\f1\b \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	4	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Stolen Hairdryer (Battery Pack):
+\f0\b0  Sustainable continuous thrust.\
+\pard\pardeftab720\sa280\partightenfactor0
+
+\f1\b\fs28 \cf0 The Color & Rarity Tables\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\f0\b0\fs24 \cf0 When generating the Scavenge pile, objects have a structural probability engine attached to their color values:\
+
+\itap1\trowd \taflags0 \trgaph108\trleft-108 \tamarb640 \trbrdrt\brdrnil \trbrdrl\brdrnil \trbrdrr\brdrnil 
+\clvertalc \clshdrawnil \clwWidth1669\clftsWidth3 \clmart10 \clmarl10 \clmarb10 \clmarr10 \clbrdrt\brdrs\brdrw20\brdrcf3 \clbrdrl\brdrs\brdrw20\brdrcf3 \clbrdrb\brdrs\brdrw20\brdrcf3 \clbrdrr\brdrs\brdrw20\brdrcf3 \clpadt160 \clpadl240 \clpadb160 \clpadr240 \gaph\cellx2160
+\clvertalc \clshdrawnil \clwWidth3644\clftsWidth3 \clmart10 \clmarl10 \clmarb10 \clmarr10 \clbrdrt\brdrs\brdrw20\brdrcf3 \clbrdrl\brdrs\brdrw20\brdrcf3 \clbrdrb\brdrs\brdrw20\brdrcf3 \clbrdrr\brdrs\brdrw20\brdrcf3 \clpadt160 \clpadl240 \clpadb160 \clpadr240 \gaph\cellx4320
+\clvertalc \clshdrawnil \clwWidth848\clftsWidth3 \clmart10 \clmarl10 \clmarb10 \clmarr10 \clbrdrt\brdrs\brdrw20\brdrcf3 \clbrdrl\brdrs\brdrw20\brdrcf3 \clbrdrb\brdrs\brdrw20\brdrcf3 \clbrdrr\brdrs\brdrw20\brdrcf3 \clpadt160 \clpadl240 \clpadb160 \clpadr240 \gaph\cellx6480
+\clvertalc \clshdrawnil \clwWidth7238\clftsWidth3 \clmart10 \clmarl10 \clmarb10 \clmarr10 \clbrdrt\brdrs\brdrw20\brdrcf3 \clbrdrl\brdrs\brdrw20\brdrcf3 \clbrdrb\brdrs\brdrw20\brdrcf3 \clbrdrr\brdrs\brdrw20\brdrcf3 \clpadt160 \clpadl240 \clpadb160 \clpadr240 \gaph\cellx8640
+\pard\intbl\itap1\pardeftab720\partightenfactor0
+
+\f1\b \cf0 Color Type
+\f0\b0 \cell 
+\pard\intbl\itap1\pardeftab720\partightenfactor0
+
+\f1\b \cf0 Variety Count
+\f0\b0 \cell 
+\pard\intbl\itap1\pardeftab720\partightenfactor0
+
+\f1\b \cf0 Drop Rate
+\f0\b0 \cell 
+\pard\intbl\itap1\pardeftab720\partightenfactor0
+
+\f1\b \cf0 Strategic/Visual Multiplier
+\f0\b0 \cell \row
+
+\itap1\trowd \taflags0 \trgaph108\trleft-108 \tamarb640 \trbrdrl\brdrnil \trbrdrr\brdrnil 
+\clvertalc \clshdrawnil \clwWidth1669\clftsWidth3 \clmart10 \clmarl10 \clmarb10 \clmarr10 \clbrdrt\brdrs\brdrw20\brdrcf3 \clbrdrl\brdrs\brdrw20\brdrcf3 \clbrdrb\brdrs\brdrw20\brdrcf3 \clbrdrr\brdrs\brdrw20\brdrcf3 \clpadt160 \clpadl240 \clpadb160 \clpadr240 \gaph\cellx2160
+\clvertalc \clshdrawnil \clwWidth3644\clftsWidth3 \clmart10 \clmarl10 \clmarb10 \clmarr10 \clbrdrt\brdrs\brdrw20\brdrcf3 \clbrdrl\brdrs\brdrw20\brdrcf3 \clbrdrb\brdrs\brdrw20\brdrcf3 \clbrdrr\brdrs\brdrw20\brdrcf3 \clpadt160 \clpadl240 \clpadb160 \clpadr240 \gaph\cellx4320
+\clvertalc \clshdrawnil \clwWidth848\clftsWidth3 \clmart10 \clmarl10 \clmarb10 \clmarr10 \clbrdrt\brdrs\brdrw20\brdrcf3 \clbrdrl\brdrs\brdrw20\brdrcf3 \clbrdrb\brdrs\brdrw20\brdrcf3 \clbrdrr\brdrs\brdrw20\brdrcf3 \clpadt160 \clpadl240 \clpadb160 \clpadr240 \gaph\cellx6480
+\clvertalc \clshdrawnil \clwWidth7238\clftsWidth3 \clmart10 \clmarl10 \clmarb10 \clmarr10 \clbrdrt\brdrs\brdrw20\brdrcf3 \clbrdrl\brdrs\brdrw20\brdrcf3 \clbrdrb\brdrs\brdrw20\brdrcf3 \clbrdrr\brdrs\brdrw20\brdrcf3 \clpadt160 \clpadl240 \clpadb160 \clpadr240 \gaph\cellx8640
+\pard\intbl\itap1\pardeftab720\partightenfactor0
+
+\f1\b \cf0 Common Colors
+\f0\b0 \cell 
+\pard\intbl\itap1\pardeftab720\partightenfactor0
+\cf0 6 (Red, Blue, Yellow, Orange, White, Grey)\cell 
+\pard\intbl\itap1\pardeftab720\partightenfactor0
+
+\f1\b \cf0 84.5%
+\f0\b0 \cell 
+\pard\intbl\itap1\pardeftab720\partightenfactor0
+\cf0 Standard component behavior.\cell \row
+
+\itap1\trowd \taflags0 \trgaph108\trleft-108 \tamarb640 \trbrdrl\brdrnil \trbrdrr\brdrnil 
+\clvertalc \clshdrawnil \clwWidth1669\clftsWidth3 \clmart10 \clmarl10 \clmarb10 \clmarr10 \clbrdrt\brdrs\brdrw20\brdrcf3 \clbrdrl\brdrs\brdrw20\brdrcf3 \clbrdrb\brdrs\brdrw20\brdrcf3 \clbrdrr\brdrs\brdrw20\brdrcf3 \clpadt160 \clpadl240 \clpadb160 \clpadr240 \gaph\cellx2160
+\clvertalc \clshdrawnil \clwWidth3644\clftsWidth3 \clmart10 \clmarl10 \clmarb10 \clmarr10 \clbrdrt\brdrs\brdrw20\brdrcf3 \clbrdrl\brdrs\brdrw20\brdrcf3 \clbrdrb\brdrs\brdrw20\brdrcf3 \clbrdrr\brdrs\brdrw20\brdrcf3 \clpadt160 \clpadl240 \clpadb160 \clpadr240 \gaph\cellx4320
+\clvertalc \clshdrawnil \clwWidth848\clftsWidth3 \clmart10 \clmarl10 \clmarb10 \clmarr10 \clbrdrt\brdrs\brdrw20\brdrcf3 \clbrdrl\brdrs\brdrw20\brdrcf3 \clbrdrb\brdrs\brdrw20\brdrcf3 \clbrdrr\brdrs\brdrw20\brdrcf3 \clpadt160 \clpadl240 \clpadb160 \clpadr240 \gaph\cellx6480
+\clvertalc \clshdrawnil \clwWidth7238\clftsWidth3 \clmart10 \clmarl10 \clmarb10 \clmarr10 \clbrdrt\brdrs\brdrw20\brdrcf3 \clbrdrl\brdrs\brdrw20\brdrcf3 \clbrdrb\brdrs\brdrw20\brdrcf3 \clbrdrr\brdrs\brdrw20\brdrcf3 \clpadt160 \clpadl240 \clpadb160 \clpadr240 \gaph\cellx8640
+\pard\intbl\itap1\pardeftab720\partightenfactor0
+
+\f1\b \cf0 Uncommon Colors
+\f0\b0 \cell 
+\pard\intbl\itap1\pardeftab720\partightenfactor0
+\cf0 1 (Neon Purple)\cell 
+\pard\intbl\itap1\pardeftab720\partightenfactor0
+
+\f1\b \cf0 15.0%
+\f0\b0 \cell 
+\pard\intbl\itap1\pardeftab720\partightenfactor0
+\cf0 Adds a passive $+10\\%$ Durability boost to the crafted component.\cell \row
+
+\itap1\trowd \taflags0 \trgaph108\trleft-108 \tamarb640 \trbrdrl\brdrnil \trbrdrt\brdrnil \trbrdrr\brdrnil 
+\clvertalc \clshdrawnil \clwWidth1669\clftsWidth3 \clmart10 \clmarl10 \clmarb10 \clmarr10 \clbrdrt\brdrs\brdrw20\brdrcf3 \clbrdrl\brdrs\brdrw20\brdrcf3 \clbrdrb\brdrs\brdrw20\brdrcf3 \clbrdrr\brdrs\brdrw20\brdrcf3 \clpadt160 \clpadl240 \clpadb160 \clpadr240 \gaph\cellx2160
+\clvertalc \clshdrawnil \clwWidth3644\clftsWidth3 \clmart10 \clmarl10 \clmarb10 \clmarr10 \clbrdrt\brdrs\brdrw20\brdrcf3 \clbrdrl\brdrs\brdrw20\brdrcf3 \clbrdrb\brdrs\brdrw20\brdrcf3 \clbrdrr\brdrs\brdrw20\brdrcf3 \clpadt160 \clpadl240 \clpadb160 \clpadr240 \gaph\cellx4320
+\clvertalc \clshdrawnil \clwWidth848\clftsWidth3 \clmart10 \clmarl10 \clmarb10 \clmarr10 \clbrdrt\brdrs\brdrw20\brdrcf3 \clbrdrl\brdrs\brdrw20\brdrcf3 \clbrdrb\brdrs\brdrw20\brdrcf3 \clbrdrr\brdrs\brdrw20\brdrcf3 \clpadt160 \clpadl240 \clpadb160 \clpadr240 \gaph\cellx6480
+\clvertalc \clshdrawnil \clwWidth7238\clftsWidth3 \clmart10 \clmarl10 \clmarb10 \clmarr10 \clbrdrt\brdrs\brdrw20\brdrcf3 \clbrdrl\brdrs\brdrw20\brdrcf3 \clbrdrb\brdrs\brdrw20\brdrcf3 \clbrdrr\brdrs\brdrw20\brdrcf3 \clpadt160 \clpadl240 \clpadb160 \clpadr240 \gaph\cellx8640
+\pard\intbl\itap1\pardeftab720\partightenfactor0
+
+\f1\b \cf0 Rare Colors
+\f0\b0 \cell 
+\pard\intbl\itap1\pardeftab720\partightenfactor0
+\cf0 1 (Gleaming Gold)\cell 
+\pard\intbl\itap1\pardeftab720\partightenfactor0
+
+\f1\b \cf0 0.5%
+\f0\b0 \cell 
+\pard\intbl\itap1\pardeftab720\partightenfactor0
+\cf0 Adds $+25\\%$ Thrust and triggers a golden sparkling visual particle tail during flight.\cell \lastrow\row
+\pard\pardeftab720\sa240\partightenfactor0
+
+\f3\i \cf0 Total Visual Permutations:
+\f0\i0  4 Shapes $\\times$ 4 Textures $\\times$ 4 Engines $\\times$ 8 Colors = 
+\f1\b 512 unique visual module variations
+\f0\b0  built out of only 12 base line-art shapes.\
+\pard\pardeftab720\sa298\partightenfactor0
+
+\f1\b\fs36 \cf0 5. Visual Payoff: Test Flight Simulation\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\f0\b0\fs24 \cf0 The round culminates in a hands-off, 10-second math-driven animation:\
+\pard\pardeftab720\partightenfactor0
+\cf0 $$\\text\{Success Score\} = \\frac\{\\text\{Thrust\}\}\{\\text\{Weight\} \\times \\text\{Drag\}\} \\times \\text\{Durability\}$$\
+\pard\tx220\tx720\pardeftab720\li720\fi-720\sa240\partightenfactor0
+\ls7\ilvl0
+\f1\b \cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 The Win Condition:
+\f0\b0  If the Success Score matches the designated hazard threshold of the kitchen map, a glorious cinematic plays of Meow-gor touching down gracefully next to the food dish on top of the fridge. Doc Frankie pops a tiny bottle of sparkling apple juice in celebration. 
+\f1\b Level Complete!
+\f0\b0 \
+\ls7\ilvl0
+\f1\b \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 The Lose Condition (Salvage Mode):
+\f0\b0  If the math falls short, Meow-gor crashes hilariously into a wall, microwave, or trash bin.\
+\ls7\ilvl0
+\f1\b \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Meta-Progression Fuse:
+\f0\b0  The components shatter on impact. The player automatically clicks the debris cloud to collect fragmented parts, transporting them directly into the Mousehole Headquarters screen to permanently upgrade their starting grid size or inventory rotation options for the next run.\
+}
