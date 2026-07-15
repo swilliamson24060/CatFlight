@@ -20,8 +20,10 @@ export const PIECE_POOL: PieceTemplate[] = [
 
   // Power Source
   { id: "rubber_band", name: "Rubber Band", categories: ["powerSource"], archetype: "rubberBandSling", footprint: { width: 1, height: 1 }, baseStats: POWER_SOURCE_STATS.rubberBandSling, spawnWeight: 7 },
-  { id: "baking_soda_bottle", name: "Baking Soda & Mustard Bottle", categories: ["powerSource"], archetype: "bakingSodaJet", footprint: { width: 1, height: 2 }, baseStats: POWER_SOURCE_STATS.bakingSodaJet, spawnWeight: 5 },
-  { id: "mentos_diet_soda", name: "Diet Soda & Mentos", categories: ["powerSource"], archetype: "mentosCore", footprint: { width: 1, height: 2 }, baseStats: POWER_SOURCE_STATS.mentosCore, spawnWeight: 3 },
+  { id: "baking_soda", name: "Baking Soda", categories: ["powerSource"], archetype: "bakingSodaJet", footprint: { width: 1, height: 1 }, baseStats: POWER_SOURCE_STATS.bakingSodaJet, spawnWeight: 5 },
+  { id: "mustard_bottle", name: "Mustard Bottle", categories: ["powerSource"], archetype: "bakingSodaJet", footprint: { width: 1, height: 1 }, baseStats: POWER_SOURCE_STATS.bakingSodaJet, spawnWeight: 4 },
+  { id: "diet_soda", name: "Diet Soda", categories: ["powerSource"], archetype: "mentosCore", footprint: { width: 1, height: 2 }, baseStats: POWER_SOURCE_STATS.mentosCore, spawnWeight: 4 },
+  { id: "fruity_gel_candy_mints", name: "Fruity Gel Candy Mints", categories: ["powerSource"], archetype: "mentosCore", footprint: { width: 1, height: 1 }, baseStats: POWER_SOURCE_STATS.mentosCore, spawnWeight: 3 },
   { id: "battery_pack", name: "Battery Pack", categories: ["powerSource"], archetype: "hairdryer", footprint: { width: 1, height: 2 }, baseStats: POWER_SOURCE_STATS.hairdryer, spawnWeight: 4 },
 
   // Wing Flapper

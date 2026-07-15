@@ -7,8 +7,10 @@ export const ITEM_GLYPHS: Record<string, string> = {
   baking_sheet: "🍪",
   // Power Source
   rubber_band: "➰",
-  baking_soda_bottle: "🧴",
-  mentos_diet_soda: "🥤",
+  baking_soda: "🧂",
+  mustard_bottle: "🧴",
+  diet_soda: "🥤",
+  fruity_gel_candy_mints: "🍬",
   battery_pack: "🔋",
   // Wing Flapper
   broom_handle: "🧹",

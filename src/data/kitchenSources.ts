@@ -94,8 +94,10 @@ export const KITCHEN_SOURCES: KitchenSourceTemplate[] = [
     revealPool: [
       { templateId: "cardboard_scrap", weight: 5 },
       { templateId: "plastic_wrap_roll", weight: 5 },
-      { templateId: "baking_soda_bottle", weight: 4 },
-      { templateId: "mentos_diet_soda", weight: 3 },
+      { templateId: "baking_soda", weight: 4 },
+      { templateId: "mustard_bottle", weight: 3 },
+      { templateId: "diet_soda", weight: 4 },
+      { templateId: "fruity_gel_candy_mints", weight: 3 },
       { templateId: "sticker_sheet", weight: 4 },
       { templateId: "lucky_charm_bead", weight: 2 },
     ],
