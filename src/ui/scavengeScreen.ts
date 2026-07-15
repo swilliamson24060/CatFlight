@@ -1,4 +1,6 @@
 import type { RunContext } from "../engine/runContext";
+import { DECAL_GLYPHS } from "../render/decals";
+import { ITEM_GLYPHS } from "../render/itemGlyphs";
 import {
   canPlace,
   clearInstance,
@@ -53,11 +55,12 @@ export function renderScavenge(
       countertop
         .map((item) => {
           const disabled = item.kind === "grid" && held ? "disabled" : "";
+          const glyph = (item.kind === "decal" ? DECAL_GLYPHS[item.template.id] : ITEM_GLYPHS[item.template.id]) ?? "";
           const label =
             item.kind === "decal"
               ? `${item.template.name} (decal)`
               : `${item.template.name} [${(item.template as ItemTemplate).footprint.width}x${(item.template as ItemTemplate).footprint.height}]`;
-          return `<button class="counter-item" data-instance="${item.instanceId}" ${disabled}>${label}</button>`;
+          return `<button class="counter-item" data-instance="${item.instanceId}" ${disabled}>${glyph ? `${glyph} ` : ""}${label}</button>`;
         })
         .join("") || "<em>Countertop cleared.</em>";
 
@@ -66,12 +69,13 @@ export function renderScavenge(
         const occupantId = occupancy[row]![col];
         const occupant = occupantId ? placedItems.find((p) => p.instanceId === occupantId) : undefined;
         const label = occupant ? `${occupant.template.name}, row ${row + 1} column ${col + 1}` : `Empty cell, row ${row + 1} column ${col + 1}`;
-        return `<button type="button" class="cell${occupant ? " filled" : ""}" data-row="${row}" data-col="${col}" aria-label="${label}"></button>`;
+        const glyph = occupant ? (ITEM_GLYPHS[occupant.template.id] ?? "") : "";
+        return `<button type="button" class="cell${occupant ? " filled" : ""}" data-row="${row}" data-col="${col}" aria-label="${label}">${glyph}</button>`;
       }).join("")
     ).join("");
 
     const heldHtml = held
-      ? `<p>Holding: <strong>${held.template.name}</strong> (${held.footprint.width}x${held.footprint.height}) <button id="rotate-btn">Rotate</button> <button id="cancel-btn">Put back</button></p>`
+      ? `<p>Holding: ${ITEM_GLYPHS[held.template.id] ?? ""} <strong>${held.template.name}</strong> (${held.footprint.width}x${held.footprint.height}) <button id="rotate-btn">Rotate</button> <button id="cancel-btn">Put back</button></p>`
       : `<p>Nothing held — click a countertop item to pick it up.</p>`;
 
     const rerollHtml = `<button id="reroll-btn" ${held || rerollsRemaining <= 0 ? "disabled" : ""}>Reroll Countertop (${rerollsRemaining} left)</button>`;

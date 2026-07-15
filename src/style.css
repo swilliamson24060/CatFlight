@@ -96,11 +96,16 @@ th {
   padding: 0;
   margin: 0;
   font-size: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
 }
 
 .cell.filled {
   background: #8bc9a8;
   border-color: #4c9a6f;
+  font-size: 1.1rem;
 }
 
 .craft-preview {

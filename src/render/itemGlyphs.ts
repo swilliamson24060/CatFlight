@@ -1,0 +1,19 @@
+/** Small visual identity for scavenge items, independent of the abstract shape/color composer. */
+export const ITEM_GLYPHS: Record<string, string> = {
+  broom_handle: "🧹",
+  wire_hanger: "🧷",
+  paint_stir_stick: "📏",
+  pizza_box_flap: "🍕",
+  cardboard_scrap: "📦",
+  plastic_wrap_roll: "🧻",
+  aluminum_foil_sheet: "🥫",
+  baking_sheet: "🍪",
+  rubber_band: "➰",
+  soda_bottle: "🧴",
+  mentos_diet_soda: "🥤",
+  battery_pack: "🔋",
+  iron_skillet: "🍳",
+  soggy_sponge: "🧽",
+  crumpled_napkin: "📃",
+  ceramic_mug: "☕",
+};
