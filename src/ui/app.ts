@@ -1,3 +1,4 @@
+import { setMusicTrack } from "../audio/music";
 import { PhaseMachine, type Phase } from "../engine/phaseMachine";
 import { advanceToNextRun, createInitialRunContext, type RunContext } from "../engine/runContext";
 import { renderFlightSim } from "./flightSimScreen";
@@ -18,6 +19,8 @@ export function mountApp(root: HTMLElement): void {
   let meta: MetaState = loadMetaState();
 
   function render(phase: Phase): void {
+    setMusicTrack(phase === "synthesis" ? "lab" : "theme");
+
     switch (phase) {
       case "scavenge":
         renderKitchen(root, context, meta, (result) => {
