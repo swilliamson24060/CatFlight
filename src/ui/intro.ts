@@ -1,26 +1,26 @@
 const INTRO_PANELS: { src: string; dialogue: string }[] = [
   {
-    src: "/intro/panel-1.jpg",
+    src: `${import.meta.env.BASE_URL}intro/panel-1.jpg`,
     dialogue: "Meow-gor stares up at the fridge, where the premium cat food waits just out of reach, as Doc Frankie looks on.",
   },
   {
-    src: "/intro/panel-2.png",
+    src: `${import.meta.env.BASE_URL}intro/panel-2.png`,
     dialogue: "Doc Frankie: \"What's wrong, Meow-gor?\"",
   },
   {
-    src: "/intro/panel-3.png",
+    src: `${import.meta.env.BASE_URL}intro/panel-3.png`,
     dialogue: "Meow-gor: \"I'm hungry but the food is up too high!\"",
   },
   {
-    src: "/intro/panel-4.png",
+    src: `${import.meta.env.BASE_URL}intro/panel-4.png`,
     dialogue: "Doc Frankie: \"Why don't you just jump on the counter and then on the fridge?\"",
   },
   {
-    src: "/intro/panel-5.png",
+    src: `${import.meta.env.BASE_URL}intro/panel-5.png`,
     dialogue: "Meow-gor: \"But the humans say I'm not allowed on the counter.\"",
   },
   {
-    src: "/intro/panel-6.png",
+    src: `${import.meta.env.BASE_URL}intro/panel-6.png`,
     dialogue: "Meow-gor: \"I know! Can you make me some wings, Doc Frankie?\"",
   },
 ];
