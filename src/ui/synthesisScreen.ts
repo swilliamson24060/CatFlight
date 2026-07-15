@@ -1,111 +1,132 @@
 import { playAssemble } from "../audio/sfx";
-import { DECAL_POOL } from "../data/decals";
 import type { RunContext } from "../engine/runContext";
+import { CATEGORY_LABELS } from "../render/categoryColors";
 import { composeCraftSvg } from "../render/craftComposer";
-import { computeStatTally } from "../systems/scavenge";
-import { assembleCraft, groupCandidatesBySlot, resolveComponent } from "../systems/synthesis";
-import type { SlotType } from "../types/core";
+import { computeBlueprintEase, computeYieldBoost, type MetaState } from "../systems/metaProgression";
+import {
+  assembleCraft,
+  chooseHero,
+  groupCandidatesByCategory,
+  identifyExcessPieces,
+  resolveComponent,
+  type CategorySelections,
+} from "../systems/synthesis";
+import { ALL_CATEGORIES, FUNCTIONAL_CATEGORIES } from "../types/core";
+import type { FunctionalPieceCategory, PieceCategory } from "../types/core";
 import type { CraftRecord } from "../types/craft";
 import type { PlacedGridItem } from "../types/grid";
-
-const SLOT_LABELS: Record<SlotType, string> = {
-  frame: "Frame",
-  skin: "Skin",
-  engine: "Engine",
-};
-
-const SLOTS: SlotType[] = ["frame", "skin", "engine"];
-
-function decalName(id: string): string {
-  return DECAL_POOL.find((decal) => decal.id === id)?.name ?? id;
-}
 
 export function renderSynthesis(
   root: HTMLElement,
   context: RunContext,
-  onAdvance: (craft: CraftRecord) => void,
+  meta: MetaState,
+  onAdvance: (craft: CraftRecord, excessPieces: PlacedGridItem[]) => void,
   onBack: () => void
 ): void {
   const placedItems = context.lastGridResult?.placedItems ?? [];
-  const decalIds = context.lastGridResult?.decalIds ?? [];
-  const candidates = groupCandidatesBySlot(placedItems);
-  const isStuck = SLOTS.some((slot) => candidates[slot].length === 0);
+  const candidates = groupCandidatesByCategory(placedItems);
+  const ease = computeBlueprintEase(meta);
+  const yieldBoost = computeYieldBoost(meta);
 
-  const selected: Partial<Record<SlotType, string>> = {};
-  for (const slot of SLOTS) {
-    if (candidates[slot].length === 1) selected[slot] = candidates[slot][0]!.instanceId;
+  function effectiveRequirement(category: FunctionalPieceCategory): number {
+    return Math.max(1, context.blueprint.requirements[category] - ease);
   }
 
-  // Defaults to the first decal found (if any) but stays fully switchable, including to "no decal".
-  let selectedDecalIndex: number | null = decalIds.length > 0 ? 0 : null;
+  const isStuck = FUNCTIONAL_CATEGORIES.some((cat) => candidates[cat].length === 0);
 
-  function getSelectedItem(slot: SlotType): PlacedGridItem | undefined {
-    const id = selected[slot];
-    return id ? candidates[slot].find((item) => item.instanceId === id) : undefined;
+  const selected: Partial<Record<PieceCategory, string[]>> = {};
+
+  function quotaFor(category: PieceCategory): number | null {
+    return category === "decoration" ? null : effectiveRequirement(category as FunctionalPieceCategory);
+  }
+
+  function isClaimedElsewhere(item: PlacedGridItem, category: PieceCategory): boolean {
+    return item.template.categories.some(
+      (other) => other !== category && (selected[other] ?? []).includes(item.instanceId)
+    );
+  }
+
+  function getSelections(): CategorySelections {
+    const result: CategorySelections = {};
+    for (const category of ALL_CATEGORIES) {
+      const ids = selected[category] ?? [];
+      result[category] = ids
+        .map((id) => candidates[category].find((item) => item.instanceId === id))
+        .filter((item): item is PlacedGridItem => Boolean(item));
+    }
+    return result;
+  }
+
+  function isReady(): boolean {
+    return FUNCTIONAL_CATEGORIES.every((cat) => (selected[cat]?.length ?? 0) === effectiveRequirement(cat));
   }
 
   function draw(): void {
-    const binHtml = SLOTS.map((slot) => {
-      const options = candidates[slot];
-      if (options.length === 0) {
-        return `<div class="bin"><h3>${SLOT_LABELS[slot]}</h3><p class="message">None found this run.</p></div>`;
+    const binHtml = ALL_CATEGORIES.map((category) => {
+      const items = candidates[category];
+      const quota = quotaFor(category);
+      const selectedIds = selected[category] ?? [];
+
+      if (items.length === 0) {
+        return `<div class="bin"><h3>${CATEGORY_LABELS[category]}</h3><p class="message">None found this run.</p></div>`;
       }
-      const buttons = options
-        .map(
-          (item) =>
-            `<button class="bin-option${selected[slot] === item.instanceId ? " selected" : ""}" data-slot="${slot}" data-instance="${item.instanceId}">${item.template.name}</button>`
-        )
+
+      const atQuota = quota !== null && selectedIds.length >= quota;
+      const buttons = items
+        .map((item) => {
+          const isSelected = selectedIds.includes(item.instanceId);
+          const claimed = !isSelected && isClaimedElsewhere(item, category);
+          const disabled = claimed || (!isSelected && atQuota);
+          const suffix = claimed ? " (claimed elsewhere)" : "";
+          return `<button class="bin-option${isSelected ? " selected" : ""}" data-category="${category}" data-instance="${item.instanceId}" ${disabled ? "disabled" : ""}>${item.template.name}${suffix}</button>`;
+        })
         .join("");
-      return `<div class="bin"><h3>${SLOT_LABELS[slot]}</h3>${buttons}</div>`;
+      const quotaLabel = quota !== null ? ` (${selectedIds.length}/${quota})` : ` (${selectedIds.length} selected)`;
+      return `<div class="bin"><h3>${CATEGORY_LABELS[category]}${quotaLabel}</h3>${buttons}</div>`;
     }).join("");
 
-    const decalBinHtml =
-      decalIds.length > 0
-        ? `<div class="bin"><h3>Decal (optional)</h3>${decalIds
-            .map(
-              (id, index) =>
-                `<button class="bin-option decal-option${selectedDecalIndex === index ? " selected" : ""}" data-index="${index}">${decalName(id)}</button>`
-            )
-            .join("")}<button class="bin-option decal-option${selectedDecalIndex === null ? " selected" : ""}" data-index="none">No decal</button></div>`
-        : "";
+    const selections = getSelections();
+    const previewCategories: Record<string, { archetype: string; color: PlacedGridItem["color"] }> = {};
+    let hasAnyFunctional = false;
+    for (const category of FUNCTIONAL_CATEGORIES) {
+      const items = selections[category] ?? [];
+      if (items.length === 0) continue;
+      const hero = chooseHero(items.map(resolveComponent));
+      if (hero) {
+        previewCategories[category] = { archetype: hero.archetype, color: hero.color };
+        hasAnyFunctional = true;
+      }
+    }
+    const decorations = selections.decoration ?? [];
 
-    const frameItem = getSelectedItem("frame");
-    const skinItem = getSelectedItem("skin");
-    const engineItem = getSelectedItem("engine");
-    const ready = Boolean(frameItem && skinItem && engineItem);
-    const chosenDecalId = selectedDecalIndex !== null ? (decalIds[selectedDecalIndex] ?? null) : null;
-
-    let previewHtml = `<p><em>Select one item per bin to preview the craft.</em></p>`;
-    if (frameItem && skinItem && engineItem) {
-      const frameComp = resolveComponent(frameItem);
-      const skinComp = resolveComponent(skinItem);
-      const engineComp = resolveComponent(engineItem);
-      const totals = computeStatTally([frameComp.stats, skinComp.stats, engineComp.stats]);
+    let previewHtml = `<p><em>Select pieces to fill each category and preview the craft.</em></p>`;
+    if (hasAnyFunctional) {
       const svg = composeCraftSvg({
-        frame: frameComp,
-        skin: skinComp,
-        engine: engineComp,
-        decalId: chosenDecalId,
+        categories: previewCategories,
+        decorationCount: decorations.length,
+        decorationFlyBetter: decorations.some((item) => item.template.flyBetter),
       });
-      previewHtml = `
-        <div class="craft-preview">${svg}</div>
-        <p>Projected stats: Thrust ${totals.thrust.toFixed(1)} &middot; Weight ${totals.weight.toFixed(1)} &middot; Drag ${totals.drag.toFixed(1)} &middot; Durability ${totals.durability.toFixed(1)}</p>
-      `;
+      previewHtml = `<div class="craft-preview">${svg}</div>`;
     }
 
-    const backHtml = isStuck
-      ? `<p class="message">Missing a component type — you can't assemble a craft from this haul.</p>
-         <button id="back-btn">Return to Scavenge</button>`
+    const anyShort = FUNCTIONAL_CATEGORIES.some((cat) => candidates[cat].length < effectiveRequirement(cat));
+    const backHtml = anyShort
+      ? `<p class="message">${
+          isStuck
+            ? "Missing a component type — you can't assemble a craft from this haul."
+            : "Not quite enough of something yet."
+        }</p>
+         <button id="back-btn">Return to Kitchen</button>`
       : "";
 
     root.innerHTML = `
       <div class="phase-shell">
-        <p class="phase-label">Run ${context.runNumber} · Tier ${context.tier}</p>
-        <h1>Phase 2: Alchemist's Kitchen (Synthesis)</h1>
-        <div class="bins">${binHtml}${decalBinHtml}</div>
+        <p class="phase-label">Run ${context.runNumber} · Tier ${context.tier} · Trip ${context.tripCount + 1}</p>
+        <h1>Phase 2: Doc's Workbench</h1>
+        <div class="bins">${binHtml}</div>
         ${previewHtml}
         ${backHtml}
-        <button id="advance-btn" ${ready ? "" : "disabled"}>Assemble Craft → Flight Sim</button>
+        <button id="advance-btn" ${isReady() ? "" : "disabled"}>Assemble Craft → Flight Sim</button>
       </div>
     `;
 
@@ -113,31 +134,29 @@ export function renderSynthesis(
   }
 
   function wireEvents(): void {
-    root.querySelectorAll<HTMLButtonElement>(".bin-option:not(.decal-option)").forEach((btn) => {
+    root.querySelectorAll<HTMLButtonElement>(".bin-option").forEach((btn) => {
       btn.addEventListener("click", () => {
-        const slot = btn.dataset.slot as SlotType;
+        const category = btn.dataset.category as PieceCategory;
         const instanceId = btn.dataset.instance!;
-        selected[slot] = instanceId;
-        draw();
-      });
-    });
-
-    root.querySelectorAll<HTMLButtonElement>(".decal-option").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const value = btn.dataset.index!;
-        selectedDecalIndex = value === "none" ? null : Number(value);
+        const current = selected[category] ?? [];
+        const idx = current.indexOf(instanceId);
+        if (idx >= 0) {
+          current.splice(idx, 1);
+        } else {
+          current.push(instanceId);
+        }
+        selected[category] = current;
         draw();
       });
     });
 
     root.querySelector<HTMLButtonElement>("#advance-btn")!.addEventListener("click", () => {
-      const frameItem = getSelectedItem("frame");
-      const skinItem = getSelectedItem("skin");
-      const engineItem = getSelectedItem("engine");
-      if (!frameItem || !skinItem || !engineItem) return;
-      const chosenDecalId = selectedDecalIndex !== null ? (decalIds[selectedDecalIndex] ?? null) : null;
+      if (!isReady()) return;
+      const selections = getSelections();
+      const craft = assembleCraft(selections, context.tripCount + 1, yieldBoost);
+      const excessPieces = identifyExcessPieces(placedItems, selections);
       playAssemble();
-      onAdvance(assembleCraft(frameItem, skinItem, engineItem, chosenDecalId));
+      onAdvance(craft, excessPieces);
     });
 
     root.querySelector<HTMLButtonElement>("#back-btn")?.addEventListener("click", () => {

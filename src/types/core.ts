@@ -1,10 +1,42 @@
-export type SlotType = "frame" | "skin" | "engine";
+export type PieceCategory =
+  | "wingMembrane"
+  | "powerSource"
+  | "wingFlapper"
+  | "aeroHelper"
+  | "attachment"
+  | "harness"
+  | "decoration";
 
-export type FrameArchetype = "glider" | "flapper" | "rocketRig" | "rotorChute";
-export type SkinArchetype = "cardboard" | "plasticWrap" | "aluminumFoil" | "bakingSheetMetal";
-export type EngineArchetype = "rubberBandSling" | "bakingSodaJet" | "mentosCore" | "hairdryer";
+/** The 6 categories a blueprint sets quotas for. Decoration is bonus-only and never required. */
+export type FunctionalPieceCategory = Exclude<PieceCategory, "decoration">;
 
-export type Archetype = FrameArchetype | SkinArchetype | EngineArchetype;
+export const FUNCTIONAL_CATEGORIES: FunctionalPieceCategory[] = [
+  "wingMembrane",
+  "powerSource",
+  "wingFlapper",
+  "aeroHelper",
+  "attachment",
+  "harness",
+];
+
+export const ALL_CATEGORIES: PieceCategory[] = [...FUNCTIONAL_CATEGORIES, "decoration"];
+
+export type WingMembraneArchetype = "cardboard" | "plasticWrap" | "aluminumFoil" | "bakingSheetMetal";
+export type PowerSourceArchetype = "rubberBandSling" | "bakingSodaJet" | "mentosCore" | "hairdryer";
+export type WingFlapperArchetype = "glider" | "flapper" | "rocketRig" | "rotorChute";
+export type AeroHelperArchetype = "finStabilizer" | "ventedSpoiler" | "noseWeight" | "tailRudder";
+export type AttachmentArchetype = "zipTie" | "hotGlueDab" | "velcroStrap" | "paperClip";
+export type HarnessArchetype = "shoelaceLoop" | "rubberStrap" | "cordSling" | "bungeeHook";
+export type DecorationArchetype = "stickerSheet" | "glitterGlue" | "racingStripe" | "luckyCharmBead";
+
+export type Archetype =
+  | WingMembraneArchetype
+  | PowerSourceArchetype
+  | WingFlapperArchetype
+  | AeroHelperArchetype
+  | AttachmentArchetype
+  | HarnessArchetype
+  | DecorationArchetype;
 
 export interface Stats {
   thrust: number;

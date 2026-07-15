@@ -1,24 +1,41 @@
-import type { Archetype, Footprint, SlotType, Stats } from "./core";
+import type { Archetype, Footprint, FunctionalPieceCategory, PieceCategory, Stats } from "./core";
 
-/** A single entry in the scavenge spawn pool. Color is rolled at spawn time, not stored here. */
-export interface ItemTemplate {
+/** A single entry in the kitchen spawn pool. Color is rolled at spawn time, not stored here. */
+export interface PieceTemplate {
   id: string;
   name: string;
-  slotType: SlotType | "junk";
-  /** Undefined for junk items, which contribute no stats and can't be synthesized. */
+  /** Empty = pure scrap, contributes no stats and can't be synthesized. 2 entries = dual-purpose. */
+  categories: PieceCategory[];
+  /** Undefined only when categories is empty. */
   archetype?: Archetype;
   footprint: Footprint;
   baseStats: Stats;
-  /** Relative weight for random selection from the pool; higher = more common. */
+  /** Relative weight for random selection from a reveal pool; higher = more common. */
   spawnWeight: number;
+  /** Decoration pieces only: grants a small real stat bonus and extra Score when used. */
+  flyBetter?: boolean;
 }
 
-/** A trinket found on the countertop that auto-collects and skips the grid entirely. */
-export interface DecalTemplate {
+export function isJunkPiece(template: PieceTemplate): boolean {
+  return template.categories.length === 0;
+}
+
+/** One clickable kitchen appliance/furniture hotspot. */
+export interface KitchenSourceTemplate {
   id: string;
   name: string;
-  icon: string;
-  spawnWeight: number;
+  /** Position of the clickable hotspot, as a percentage of the kitchen scene's viewBox. */
+  hotspot: { x: number; y: number; width: number; height: number };
+  /** How many objects this source reveals when opened. */
+  revealCount: { min: number; max: number };
+  /** Which pieces can come out of this source, with optional per-source weight overrides. */
+  revealPool: { templateId: string; weight?: number }[];
+}
+
+/** Per-tier quotas for the 6 functional categories. Decoration is deliberately excluded -- it's bonus-only. */
+export interface Blueprint {
+  tier: number;
+  requirements: Record<FunctionalPieceCategory, number>;
 }
 
 /** Defines the brilliance ranges that grant rarity bonuses, applied per-item at synthesis time. */

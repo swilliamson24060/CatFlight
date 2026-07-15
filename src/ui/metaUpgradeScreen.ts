@@ -25,17 +25,24 @@ export function renderMetaUpgrade(
         } Earned ${computeScrapReward(outcome)} scrap.</p>`
       : "";
 
+    const scoreSummary =
+      outcome?.success && context.craft
+        ? `<p>Trips taken: ${context.tripCount + 1} &middot; Score: ${context.craft.score}</p>`
+        : "";
+
     const upgradeCards = UPGRADES.map((upgrade) => {
       const level = getUpgradeLevel(meta, upgrade.id);
       const maxed = level >= upgrade.maxLevel;
       const cost = maxed ? null : upgrade.costForLevel(level);
-      const canAfford = cost !== null && meta.scrap >= cost;
+      const balance = upgrade.currency === "scrap" ? meta.scrap : meta.spareParts;
+      const canAfford = cost !== null && balance >= cost;
+      const currencyLabel = upgrade.currency === "scrap" ? "scrap" : "spare parts";
       return `
         <div class="upgrade-card">
           <h3>${upgrade.name} <span class="upgrade-level">Lv ${level}/${upgrade.maxLevel}</span></h3>
           <p>${upgrade.description}</p>
           <button class="buy-btn" data-id="${upgrade.id}" ${maxed || !canAfford ? "disabled" : ""}>
-            ${maxed ? "MAXED" : `Buy — ${cost} scrap`}
+            ${maxed ? "MAXED" : `Buy — ${cost} ${currencyLabel}`}
           </button>
         </div>
       `;
@@ -46,11 +53,12 @@ export function renderMetaUpgrade(
         <p class="phase-label">Run ${context.runNumber} · Tier ${context.tier}</p>
         <h1>Phase 4: Mousehole HQ</h1>
         ${outcomeSummary}
-        <p class="scrap-balance">Scrap: ${meta.scrap}</p>
-        <p class="best-tier">Best tier reached: ${meta.bestTier}</p>
+        ${scoreSummary}
+        <p class="scrap-balance">Scrap: ${meta.scrap} &middot; Spare Parts: ${meta.spareParts}</p>
+        <p class="best-tier">Best tier reached: ${meta.bestTier} &middot; Best score: ${meta.bestScore}</p>
         <div class="upgrades">${upgradeCards}</div>
         <p>Next run is tier ${context.tier + 1}.</p>
-        <button id="advance-btn">Start Next Run → Scavenge</button>
+        <button id="advance-btn">Start Next Run → Kitchen</button>
       </div>
     `;
 

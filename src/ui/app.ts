@@ -1,10 +1,16 @@
 import { PhaseMachine, type Phase } from "../engine/phaseMachine";
 import { advanceToNextRun, createInitialRunContext, type RunContext } from "../engine/runContext";
 import { renderFlightSim } from "./flightSimScreen";
+import { renderKitchen } from "./kitchenScreen";
 import { renderMetaUpgrade } from "./metaUpgradeScreen";
-import { renderScavenge } from "./scavengeScreen";
 import { renderSynthesis } from "./synthesisScreen";
-import { computeScrapReward, loadMetaState, saveMetaState, type MetaState } from "../systems/metaProgression";
+import {
+  computeScrapReward,
+  computeSparePartsReward,
+  loadMetaState,
+  saveMetaState,
+  type MetaState,
+} from "../systems/metaProgression";
 
 export function mountApp(root: HTMLElement): void {
   const machine = new PhaseMachine();
@@ -14,8 +20,8 @@ export function mountApp(root: HTMLElement): void {
   function render(phase: Phase): void {
     switch (phase) {
       case "scavenge":
-        renderScavenge(root, context, meta, (result) => {
-          context = { ...context, lastGridResult: result };
+        renderKitchen(root, context, meta, (result) => {
+          context = { ...context, lastGridResult: result, tripCount: context.tripCount + 1 };
           machine.advance();
         });
         break;
@@ -23,26 +29,36 @@ export function mountApp(root: HTMLElement): void {
         renderSynthesis(
           root,
           context,
-          (craft) => {
-            context = { ...context, craft };
+          meta,
+          (craft, excessPieces) => {
+            context = { ...context, craft, excessPieces };
             machine.advance();
           },
           () => {
-            context = { ...context, lastGridResult: undefined };
             machine.setPhase("scavenge");
           }
         );
         break;
       case "flightSim":
         renderFlightSim(root, context, (outcome) => {
-          meta = {
-            ...meta,
-            scrap: meta.scrap + computeScrapReward(outcome),
-            bestTier: Math.max(meta.bestTier, context.tier),
-          };
-          saveMetaState(meta);
           context = { ...context, lastFlightOutcome: outcome };
-          machine.advance();
+
+          if (outcome.success) {
+            const sparePartsEarned = computeSparePartsReward(context.excessPieces ?? []);
+            meta = {
+              ...meta,
+              scrap: meta.scrap + computeScrapReward(outcome),
+              spareParts: meta.spareParts + sparePartsEarned,
+              bestTier: Math.max(meta.bestTier, context.tier),
+              bestScore: Math.max(meta.bestScore, context.craft?.score ?? 0),
+            };
+            saveMetaState(meta);
+            machine.advance();
+          } else {
+            // Failed flights don't end the run -- back to the kitchen with the same blueprint
+            // and everything already carried, for another (score-costing) trip.
+            machine.setPhase("scavenge");
+          }
         });
         break;
       case "metaUpgrade":

@@ -1,19 +1,35 @@
 import { DEFAULT_GRID_SIZE } from "./grid";
 import type { FlightOutcome } from "./flightSim";
+import type { PlacedGridItem } from "../types/grid";
 
 export interface MetaState {
   scrap: number;
+  spareParts: number;
   gridExpansionLevel: number;
   junkFilterLevel: number;
   rerollLevel: number;
   luckLevel: number;
+  blueprintEaseLevel: number;
+  yieldBoostLevel: number;
   bestTier: number;
+  bestScore: number;
 }
 
 const STORAGE_KEY = "catflight-meta-v1";
 
 export function createDefaultMetaState(): MetaState {
-  return { scrap: 0, gridExpansionLevel: 0, junkFilterLevel: 0, rerollLevel: 0, luckLevel: 0, bestTier: 0 };
+  return {
+    scrap: 0,
+    spareParts: 0,
+    gridExpansionLevel: 0,
+    junkFilterLevel: 0,
+    rerollLevel: 0,
+    luckLevel: 0,
+    blueprintEaseLevel: 0,
+    yieldBoostLevel: 0,
+    bestTier: 0,
+    bestScore: 0,
+  };
 }
 
 export function loadMetaState(): MetaState {
@@ -34,10 +50,6 @@ export function computeGridSize(meta: MetaState): number {
   return DEFAULT_GRID_SIZE + meta.gridExpansionLevel;
 }
 
-export function computeCountertopSize(meta: MetaState): number {
-  return 12 + meta.gridExpansionLevel * 2;
-}
-
 export function computeEffectiveJunkDensity(baseDensity: number, meta: MetaState): number {
   return Math.max(0.1, baseDensity - meta.junkFilterLevel * 0.04);
 }
@@ -46,18 +58,35 @@ export function computeScrapReward(outcome: FlightOutcome): number {
   return 5 + outcome.gatesCleared * 5;
 }
 
+/** Placeholder formula -- flagged for a balance pass. Rewards carrying home more/bigger excess. */
+export function computeSparePartsReward(excessPieces: PlacedGridItem[]): number {
+  return excessPieces.reduce((sum, item) => sum + 2 + item.footprint.width * item.footprint.height, 0);
+}
+
 /** Fed into rollColor as an exponent bias; 0 at level 0 leaves the roll unchanged. */
 export function computeLuckBias(meta: MetaState): number {
   return meta.luckLevel * 0.25;
 }
 
-export type UpgradeId = "gridExpansion" | "junkFilter" | "reroll" | "luck";
+/** Every level reduces every functional category's blueprint requirement by 1, floored at 1. */
+export function computeBlueprintEase(meta: MetaState): number {
+  return meta.blueprintEaseLevel;
+}
+
+/** Flat fractional boost applied to thrust/durability at assembly; 0 at level 0 leaves stats unchanged. */
+export function computeYieldBoost(meta: MetaState): number {
+  return meta.yieldBoostLevel * 0.05;
+}
+
+export type UpgradeId = "gridExpansion" | "junkFilter" | "reroll" | "luck" | "blueprintEase" | "yieldBoost";
+export type UpgradeCurrency = "scrap" | "spareParts";
 
 export interface UpgradeDef {
   id: UpgradeId;
   name: string;
   description: string;
   maxLevel: number;
+  currency: UpgradeCurrency;
   costForLevel: (currentLevel: number) => number;
 }
 
@@ -67,6 +96,7 @@ export const UPGRADES: UpgradeDef[] = [
     name: "Bigger Toolbox",
     description: "+1 row and column to your inventory grid.",
     maxLevel: 5,
+    currency: "scrap",
     costForLevel: (level) => 30 + level * 20,
   },
   {
@@ -74,6 +104,7 @@ export const UPGRADES: UpgradeDef[] = [
     name: "Junk Sense",
     description: "Reduces junk density on the countertop.",
     maxLevel: 8,
+    currency: "scrap",
     costForLevel: (level) => 15 + level * 15,
   },
   {
@@ -81,6 +112,7 @@ export const UPGRADES: UpgradeDef[] = [
     name: "Lucky Paw",
     description: "+1 free countertop reroll per run.",
     maxLevel: 3,
+    currency: "scrap",
     costForLevel: (level) => 10 + level * 10,
   },
   {
@@ -88,7 +120,24 @@ export const UPGRADES: UpgradeDef[] = [
     name: "Golden Whisker",
     description: "Increases the odds of uncommon and rare color rolls.",
     maxLevel: 5,
+    currency: "scrap",
     costForLevel: (level) => 20 + level * 20,
+  },
+  {
+    id: "blueprintEase",
+    name: "Doc's Shortcuts",
+    description: "Reduces every blueprint category's requirement by 1 (never below 1).",
+    maxLevel: 3,
+    currency: "spareParts",
+    costForLevel: (level) => 40 + level * 30,
+  },
+  {
+    id: "yieldBoost",
+    name: "Reinforced Rivets",
+    description: "+5% thrust and durability on every assembled craft.",
+    maxLevel: 5,
+    currency: "spareParts",
+    costForLevel: (level) => 25 + level * 20,
   },
 ];
 
@@ -102,7 +151,15 @@ export function getUpgradeLevel(meta: MetaState, id: UpgradeId): number {
       return meta.rerollLevel;
     case "luck":
       return meta.luckLevel;
+    case "blueprintEase":
+      return meta.blueprintEaseLevel;
+    case "yieldBoost":
+      return meta.yieldBoostLevel;
   }
+}
+
+function balanceFor(meta: MetaState, currency: UpgradeCurrency): number {
+  return currency === "scrap" ? meta.scrap : meta.spareParts;
 }
 
 export function purchaseUpgrade(meta: MetaState, id: UpgradeId): MetaState {
@@ -110,9 +167,13 @@ export function purchaseUpgrade(meta: MetaState, id: UpgradeId): MetaState {
   const level = getUpgradeLevel(meta, id);
   if (level >= def.maxLevel) return meta;
   const cost = def.costForLevel(level);
-  if (meta.scrap < cost) return meta;
+  if (balanceFor(meta, def.currency) < cost) return meta;
 
-  const updated: MetaState = { ...meta, scrap: meta.scrap - cost };
+  const updated: MetaState = {
+    ...meta,
+    scrap: def.currency === "scrap" ? meta.scrap - cost : meta.scrap,
+    spareParts: def.currency === "spareParts" ? meta.spareParts - cost : meta.spareParts,
+  };
   switch (id) {
     case "gridExpansion":
       updated.gridExpansionLevel = level + 1;
@@ -125,6 +186,12 @@ export function purchaseUpgrade(meta: MetaState, id: UpgradeId): MetaState {
       break;
     case "luck":
       updated.luckLevel = level + 1;
+      break;
+    case "blueprintEase":
+      updated.blueprintEaseLevel = level + 1;
+      break;
+    case "yieldBoost":
+      updated.yieldBoostLevel = level + 1;
       break;
   }
   return updated;

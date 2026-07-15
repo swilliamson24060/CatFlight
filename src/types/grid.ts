@@ -1,9 +1,9 @@
 import type { Footprint, ItemColor } from "./core";
-import type { ItemTemplate } from "./content";
+import type { PieceTemplate } from "./content";
 
 export interface PlacedGridItem {
   instanceId: string;
-  template: ItemTemplate;
+  template: PieceTemplate;
   color: ItemColor;
   footprint: Footprint;
   origin: { row: number; col: number };
@@ -11,5 +11,4 @@ export interface PlacedGridItem {
 
 export interface GridResult {
   placedItems: PlacedGridItem[];
-  decalIds: string[];
 }

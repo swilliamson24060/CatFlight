@@ -1,27 +1,68 @@
 import { describe, expect, it } from "vitest";
 import {
   UPGRADES,
-  computeCountertopSize,
   computeEffectiveJunkDensity,
   computeGridSize,
   computeLuckBias,
   computeScrapReward,
+  computeSparePartsReward,
   createDefaultMetaState,
   getUpgradeLevel,
+  loadMetaState,
   purchaseUpgrade,
 } from "./metaProgression";
 import { rollColor } from "./scavenge";
 import type { FlightOutcome } from "./flightSim";
+import type { PlacedGridItem } from "../types/grid";
 
 function outcomeWith(gatesCleared: number): FlightOutcome {
   return { success: gatesCleared === 3, gatesCleared, failedAt: null, landingMissReason: null, glideRatio: 1 };
 }
 
-describe("computeGridSize / computeCountertopSize", () => {
-  it("scale with gridExpansionLevel", () => {
+describe("computeGridSize", () => {
+  it("scales with gridExpansionLevel", () => {
     const meta = { ...createDefaultMetaState(), gridExpansionLevel: 2 };
-    expect(computeGridSize(meta)).toBe(7);
-    expect(computeCountertopSize(meta)).toBe(16);
+    expect(computeGridSize(meta)).toBe(8);
+  });
+});
+
+describe("computeSparePartsReward", () => {
+  it("sums a footprint-weighted value across excess pieces", () => {
+    const pieces = [
+      { footprint: { width: 1, height: 1 } },
+      { footprint: { width: 2, height: 2 } },
+    ] as PlacedGridItem[];
+    expect(computeSparePartsReward(pieces)).toBe(2 + 1 + (2 + 4));
+  });
+
+  it("is zero with no excess pieces", () => {
+    expect(computeSparePartsReward([])).toBe(0);
+  });
+});
+
+describe("loadMetaState backward compatibility", () => {
+  it("fills in new fields with defaults for an old-shape saved blob", () => {
+    const store: Record<string, string> = {
+      "catflight-meta-v1": JSON.stringify({ scrap: 42, gridExpansionLevel: 1 }),
+    };
+    (globalThis as unknown as { localStorage: Storage }).localStorage = {
+      getItem: (key: string) => store[key] ?? null,
+      setItem: (key: string, value: string) => {
+        store[key] = value;
+      },
+    } as Storage;
+
+    try {
+      const meta = loadMetaState();
+      expect(meta.scrap).toBe(42);
+      expect(meta.gridExpansionLevel).toBe(1);
+      expect(meta.spareParts).toBe(0);
+      expect(meta.blueprintEaseLevel).toBe(0);
+      expect(meta.yieldBoostLevel).toBe(0);
+      expect(meta.bestScore).toBe(0);
+    } finally {
+      delete (globalThis as { localStorage?: Storage }).localStorage;
+    }
   });
 });
 
@@ -98,5 +139,14 @@ describe("purchaseUpgrade", () => {
     const updated = purchaseUpgrade(meta, "reroll");
     expect(updated.scrap).toBe(meta.scrap);
     expect(getUpgradeLevel(updated, "reroll")).toBe(rerollDef.maxLevel);
+  });
+
+  it("debits spareParts (not scrap) for a spareParts-currency upgrade", () => {
+    const meta = { ...createDefaultMetaState(), scrap: 100, spareParts: 100 };
+    const def = UPGRADES.find((u) => u.id === "yieldBoost")!;
+    const updated = purchaseUpgrade(meta, "yieldBoost");
+    expect(getUpgradeLevel(updated, "yieldBoost")).toBe(1);
+    expect(updated.spareParts).toBe(100 - def.costForLevel(0));
+    expect(updated.scrap).toBe(100);
   });
 });

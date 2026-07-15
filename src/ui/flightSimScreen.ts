@@ -1,7 +1,7 @@
 import { playLandingMiss, playLaunchFail, playMidflightFail, playSuccess } from "../audio/sfx";
 import type { RunContext } from "../engine/runContext";
 import { composeCraftCardSvg } from "../render/craftCard";
-import { composeCraftSvg } from "../render/craftComposer";
+import { composeCraftSvg, craftRecordToVisual } from "../render/craftComposer";
 import { downloadDataUrl, svgToPngDataUrl } from "../render/exportImage";
 import { evaluateFlight, type FlightGate, type FlightOutcome } from "../systems/flightSim";
 
@@ -74,7 +74,7 @@ export function renderFlightSim(root: HTMLElement, context: RunContext, onAdvanc
     const animClass = outcome && phase !== "idle" ? animationClassFor(outcome) : "";
     const craftHtml = craft
       ? `<div class="craft-preview">
-           <div class="flight-stage"><div class="flight-craft ${animClass}">${composeCraftSvg(craft)}</div></div>
+           <div class="flight-stage"><div class="flight-craft ${animClass}">${composeCraftSvg(craftRecordToVisual(craft))}</div></div>
          </div>
          <p>Stats: Thrust ${craft.stats.thrust.toFixed(1)} &middot; Weight ${craft.stats.weight.toFixed(1)} &middot; Drag ${craft.stats.drag.toFixed(1)} &middot; Durability ${craft.stats.durability.toFixed(1)}</p>`
       : `<p><em>No craft assembled.</em></p>`;
@@ -153,7 +153,7 @@ export function renderFlightSim(root: HTMLElement, context: RunContext, onAdvanc
 
     root.querySelector<HTMLButtonElement>("#download-btn")?.addEventListener("click", () => {
       if (!craft) return;
-      const cardSvg = composeCraftCardSvg(craft, craft.stats, craft.seedString ?? "");
+      const cardSvg = composeCraftCardSvg(craftRecordToVisual(craft), craft.stats, craft.seedString ?? "");
       svgToPngDataUrl(cardSvg, 320, 260)
         .then((dataUrl) => {
           downloadDataUrl(dataUrl, `cat-flight-wing-${craft.seedString ?? "craft"}.png`);

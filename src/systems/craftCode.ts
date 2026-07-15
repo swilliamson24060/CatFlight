@@ -1,21 +1,38 @@
-import { DECAL_POOL } from "../data/decals";
-import type { EngineArchetype, FrameArchetype, ItemColor, SkinArchetype } from "../types/core";
+import { FUNCTIONAL_CATEGORIES } from "../types/core";
+import type { Archetype, FunctionalPieceCategory, ItemColor, Stats } from "../types/core";
 import type { CraftRecord } from "../types/craft";
 
-const FRAME_ORDER: FrameArchetype[] = ["glider", "flapper", "rocketRig", "rotorChute"];
-const SKIN_ORDER: SkinArchetype[] = ["cardboard", "plasticWrap", "aluminumFoil", "bakingSheetMetal"];
-const ENGINE_ORDER: EngineArchetype[] = ["rubberBandSling", "bakingSodaJet", "mentosCore", "hairdryer"];
+const CATEGORY_ORDER: FunctionalPieceCategory[] = [...FUNCTIONAL_CATEGORIES];
+
+const ARCHETYPE_ORDER: Record<FunctionalPieceCategory, Archetype[]> = {
+  wingMembrane: ["cardboard", "plasticWrap", "aluminumFoil", "bakingSheetMetal"],
+  powerSource: ["rubberBandSling", "bakingSodaJet", "mentosCore", "hairdryer"],
+  wingFlapper: ["glider", "flapper", "rocketRig", "rotorChute"],
+  aeroHelper: ["finStabilizer", "ventedSpoiler", "noseWeight", "tailRudder"],
+  attachment: ["zipTie", "hotGlueDab", "velcroStrap", "paperClip"],
+  harness: ["shoelaceLoop", "rubberStrap", "cordSling", "bungeeHook"],
+};
 
 const ARCHETYPE_BITS = 2n;
 const HUE_BITS = 9n;
 const HUE_MAX = 511n;
 const BRILLIANCE_BITS = 8n;
 const BRILLIANCE_MAX = 255n;
-const DECAL_BITS = 4n;
-const NO_DECAL = 15n;
 const COMPONENT_BITS = ARCHETYPE_BITS + HUE_BITS + BRILLIANCE_BITS;
 
+const DECORATION_COUNT_BITS = 4n;
+const DECORATION_COUNT_MAX = 15n;
+const DECORATION_BITS = DECORATION_COUNT_BITS + 1n;
+
+const STAT_BITS = 9n;
+const STAT_OFFSET = 256n;
+const STAT_MAX = 511n;
+
+const SCORE_BITS = 12n;
+const SCORE_MAX = 4095n;
+
 const BASE36_DIGITS = "0123456789abcdefghijklmnopqrstuvwxyz";
+const STAT_KEYS = ["thrust", "weight", "drag", "durability"] as const;
 
 function bigIntFromBase36(value: string): bigint {
   let result = 0n;
@@ -40,63 +57,113 @@ function decodeColor(bits: bigint): ItemColor {
 }
 
 function encodeComponent(archetypeIndex: number, color: ItemColor): bigint {
-  return (BigInt(archetypeIndex) & 3n) | (encodeColor(color) << ARCHETYPE_BITS);
+  return (BigInt(Math.max(0, archetypeIndex)) & 3n) | (encodeColor(color) << ARCHETYPE_BITS);
 }
 
-function decodeComponent<T extends string>(bits: bigint, order: T[]): { archetype: T; color: ItemColor } {
+function decodeComponent(bits: bigint, order: Archetype[]): { archetype: Archetype; color: ItemColor } {
   const archetypeIndex = Number(bits & 3n);
   const color = decodeColor(bits >> ARCHETYPE_BITS);
   return { archetype: order[archetypeIndex] ?? order[0]!, color };
 }
 
+function encodeStat(value: number): bigint {
+  const clamped = Math.max(-Number(STAT_OFFSET), Math.min(Number(STAT_OFFSET) - 1, Math.round(value)));
+  return BigInt(clamped + Number(STAT_OFFSET)) & STAT_MAX;
+}
+
+function decodeStat(bits: bigint): number {
+  return Number(bits & STAT_MAX) - Number(STAT_OFFSET);
+}
+
+/** Grand-total stats and score are packed explicitly since the visual only carries a hero
+ * component per functional category -- a shared code should still show the real final numbers
+ * even when a category's quota (and therefore its true stat contribution) exceeds 1. */
 export interface EncodableCraft {
-  frame: { archetype: string; color: ItemColor };
-  skin: { archetype: string; color: ItemColor };
-  engine: { archetype: string; color: ItemColor };
-  decalId: string | null;
+  categories: Record<FunctionalPieceCategory, { archetype: string; color: ItemColor } | undefined>;
+  decorationCount: number;
+  decorationFlyBetter: boolean;
+  stats: Stats;
+  score: number;
 }
 
 export function encodeCraft(craft: EncodableCraft): string {
-  const frameIdx = FRAME_ORDER.indexOf(craft.frame.archetype as FrameArchetype);
-  const skinIdx = SKIN_ORDER.indexOf(craft.skin.archetype as SkinArchetype);
-  const engineIdx = ENGINE_ORDER.indexOf(craft.engine.archetype as EngineArchetype);
-  const decalIdx = craft.decalId ? DECAL_POOL.findIndex((d) => d.id === craft.decalId) : -1;
-  const decalBits = decalIdx === -1 ? NO_DECAL : BigInt(decalIdx) & 15n;
+  let packed = 0n;
+  let shift = 0n;
 
-  let packed = decalBits;
-  packed |= encodeComponent(frameIdx, craft.frame.color) << DECAL_BITS;
-  packed |= encodeComponent(skinIdx, craft.skin.color) << (DECAL_BITS + COMPONENT_BITS);
-  packed |= encodeComponent(engineIdx, craft.engine.color) << (DECAL_BITS + COMPONENT_BITS * 2n);
+  for (const category of CATEGORY_ORDER) {
+    const component = craft.categories[category];
+    const order = ARCHETYPE_ORDER[category];
+    const archetypeIndex = component ? order.indexOf(component.archetype as Archetype) : 0;
+    const color = component?.color ?? { hue: 0, brilliance: 0 };
+    packed |= encodeComponent(archetypeIndex, color) << shift;
+    shift += COMPONENT_BITS;
+  }
+
+  const decorationBits =
+    (BigInt(Math.min(Number(DECORATION_COUNT_MAX), craft.decorationCount)) & DECORATION_COUNT_MAX) |
+    ((craft.decorationFlyBetter ? 1n : 0n) << DECORATION_COUNT_BITS);
+  packed |= decorationBits << shift;
+  shift += DECORATION_BITS;
+
+  for (const key of STAT_KEYS) {
+    packed |= encodeStat(craft.stats[key]) << shift;
+    shift += STAT_BITS;
+  }
+
+  packed |= (BigInt(Math.max(0, Math.min(Number(SCORE_MAX), Math.round(craft.score)))) & SCORE_MAX) << shift;
 
   return packed.toString(36);
 }
 
 export interface DecodedCraft {
-  frame: { archetype: FrameArchetype; color: ItemColor };
-  skin: { archetype: SkinArchetype; color: ItemColor };
-  engine: { archetype: EngineArchetype; color: ItemColor };
-  decalId: string | null;
+  categories: Record<FunctionalPieceCategory, { archetype: Archetype; color: ItemColor }>;
+  decorationCount: number;
+  decorationFlyBetter: boolean;
+  stats: Stats;
+  score: number;
 }
 
 export function decodeCraftCode(code: string): DecodedCraft {
   const packed = bigIntFromBase36(code);
   const componentMask = (1n << COMPONENT_BITS) - 1n;
+  let shift = 0n;
 
-  const decalBits = packed & 15n;
-  const frameBits = (packed >> DECAL_BITS) & componentMask;
-  const skinBits = (packed >> (DECAL_BITS + COMPONENT_BITS)) & componentMask;
-  const engineBits = (packed >> (DECAL_BITS + COMPONENT_BITS * 2n)) & componentMask;
+  const categories = {} as DecodedCraft["categories"];
+  for (const category of CATEGORY_ORDER) {
+    const bits = (packed >> shift) & componentMask;
+    categories[category] = decodeComponent(bits, ARCHETYPE_ORDER[category]);
+    shift += COMPONENT_BITS;
+  }
 
-  const decalId = decalBits === NO_DECAL ? null : (DECAL_POOL[Number(decalBits)]?.id ?? null);
+  const decorationMask = (1n << DECORATION_BITS) - 1n;
+  const decorationBits = (packed >> shift) & decorationMask;
+  const decorationCount = Number(decorationBits & DECORATION_COUNT_MAX);
+  const decorationFlyBetter = ((decorationBits >> DECORATION_COUNT_BITS) & 1n) === 1n;
+  shift += DECORATION_BITS;
 
-  return {
-    frame: decodeComponent(frameBits, FRAME_ORDER),
-    skin: decodeComponent(skinBits, SKIN_ORDER),
-    engine: decodeComponent(engineBits, ENGINE_ORDER),
-    decalId,
-  };
+  const stats = {} as Stats;
+  for (const key of STAT_KEYS) {
+    stats[key] = decodeStat((packed >> shift) & STAT_MAX);
+    shift += STAT_BITS;
+  }
+
+  const score = Number((packed >> shift) & SCORE_MAX);
+
+  return { categories, decorationCount, decorationFlyBetter, stats, score };
 }
 
-export function craftSeedString(craft: Pick<CraftRecord, "frame" | "skin" | "engine" | "decalId">): string {
-  return encodeCraft(craft);
+export function craftSeedString(craft: Pick<CraftRecord, "categories" | "stats" | "score">): string {
+  const categories = {} as EncodableCraft["categories"];
+  for (const category of CATEGORY_ORDER) {
+    const hero = craft.categories[category].hero;
+    categories[category] = hero ? { archetype: hero.archetype, color: hero.color } : undefined;
+  }
+  const decoration = craft.categories.decoration;
+  return encodeCraft({
+    categories,
+    decorationCount: decoration.components.length,
+    decorationFlyBetter: decoration.components.some((c) => c.flyBetter),
+    stats: craft.stats,
+    score: craft.score,
+  });
 }

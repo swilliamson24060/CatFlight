@@ -1,85 +1,10 @@
-import { ITEM_POOL } from "../data/items";
-import { DECAL_POOL } from "../data/decals";
 import { getRarityBand } from "../data/colorBands";
-import type { DecalTemplate, ItemTemplate } from "../types/content";
 import type { ItemColor, Stats } from "../types/core";
-
-export interface CountertopItem {
-  instanceId: string;
-  kind: "grid" | "decal";
-  template: ItemTemplate | DecalTemplate;
-  color?: ItemColor;
-}
-
-let nextInstanceId = 1;
-function makeInstanceId(): string {
-  return `inst-${nextInstanceId++}`;
-}
-
-function weightedPick<T extends { spawnWeight: number }>(pool: T[]): T {
-  const total = pool.reduce((sum, item) => sum + item.spawnWeight, 0);
-  let roll = Math.random() * total;
-  for (const item of pool) {
-    roll -= item.spawnWeight;
-    if (roll <= 0) return item;
-  }
-  return pool[pool.length - 1]!;
-}
 
 /** luckBias 0 leaves the roll unchanged; higher values skew brilliance upward toward 1. */
 export function rollColor(luckBias = 0): ItemColor {
   const brilliance = Math.random() ** (1 / (1 + luckBias));
   return { hue: Math.random() * 360, brilliance };
-}
-
-export const DEFAULT_COUNTERTOP_SIZE = 12;
-const DECAL_CHANCE = 0.35;
-
-function shuffle<T>(array: T[]): T[] {
-  const result = [...array];
-  for (let i = result.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [result[i], result[j]] = [result[j]!, result[i]!];
-  }
-  return result;
-}
-
-/**
- * Always includes at least one Frame, one Skin, and one Engine candidate so a run can
- * never generate a countertop that makes synthesis impossible (see softlock fix).
- */
-export function generateCountertop(
-  junkDensity: number,
-  countertopSize: number = DEFAULT_COUNTERTOP_SIZE,
-  luckBias = 0
-): CountertopItem[] {
-  const junkTemplates = ITEM_POOL.filter((item) => item.slotType === "junk");
-  const usefulTemplates = ITEM_POOL.filter((item) => item.slotType !== "junk");
-  const frameTemplates = ITEM_POOL.filter((item) => item.slotType === "frame");
-  const skinTemplates = ITEM_POOL.filter((item) => item.slotType === "skin");
-  const engineTemplates = ITEM_POOL.filter((item) => item.slotType === "engine");
-
-  const guaranteed = [frameTemplates, skinTemplates, engineTemplates].map((pool) => weightedPick(pool));
-  const items: CountertopItem[] = guaranteed.map((template) => ({
-    instanceId: makeInstanceId(),
-    kind: "grid",
-    template,
-    color: rollColor(luckBias),
-  }));
-
-  for (let i = items.length; i < countertopSize; i++) {
-    const template = Math.random() < junkDensity ? weightedPick(junkTemplates) : weightedPick(usefulTemplates);
-    items.push({ instanceId: makeInstanceId(), kind: "grid", template, color: rollColor(luckBias) });
-  }
-
-  const shuffled = shuffle(items);
-
-  if (Math.random() < DECAL_CHANCE) {
-    const decal = weightedPick(DECAL_POOL);
-    shuffled.push({ instanceId: makeInstanceId(), kind: "decal", template: decal });
-  }
-
-  return shuffled;
 }
 
 export function computeStatTally(perItemStats: Stats[]): Stats {
