@@ -1,7 +1,7 @@
 import type { RunContext } from "../engine/runContext";
 import { summarizeBlueprintForDisplay } from "../render/categoryColors";
 import { ITEM_GLYPHS } from "../render/itemGlyphs";
-import { composeKitchenBackground } from "../render/kitchenShapes";
+import { composeKitchenBackground, composeWorkshopBackground } from "../render/kitchenShapes";
 import {
   canPlace,
   clearInstance,
@@ -168,6 +168,7 @@ export function renderKitchen(
       ? `
         <div class="workshop-briefing-overlay" id="workshop-briefing-overlay">
           <div class="workshop-briefing-panel">
+            <div class="workshop-scene">${composeWorkshopBackground()}</div>
             <h2>Doc's Workshop</h2>
             <p>"Alright, here's what I need for this build:"</p>
             <p class="workshop-briefing-list">${blueprintHtml}</p>

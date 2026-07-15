@@ -265,12 +265,24 @@ th {
   text-align: center;
 }
 
+.workshop-scene {
+  margin: 0 -1.5rem;
+}
+
+.workshop-background-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 220px;
+  object-fit: cover;
+  border-radius: 8px 8px 0 0;
+}
+
 .workshop-briefing-panel h2 {
   margin: 0 -1.5rem 1rem;
   padding: 1.1rem 1.5rem;
   background: #4c9a6f;
   color: #fff;
-  border-radius: 8px 8px 0 0;
 }
 
 .workshop-briefing-list {
