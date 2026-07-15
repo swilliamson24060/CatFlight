@@ -1,3 +1,4 @@
+import { DECAL_POOL } from "../data/decals";
 import type { RunContext } from "../engine/runContext";
 import { composeCraftSvg } from "../render/craftComposer";
 import { computeStatTally } from "../systems/scavenge";
@@ -14,6 +15,10 @@ const SLOT_LABELS: Record<SlotType, string> = {
 
 const SLOTS: SlotType[] = ["frame", "skin", "engine"];
 
+function decalName(id: string): string {
+  return DECAL_POOL.find((decal) => decal.id === id)?.name ?? id;
+}
+
 export function renderSynthesis(
   root: HTMLElement,
   context: RunContext,
@@ -29,6 +34,9 @@ export function renderSynthesis(
   for (const slot of SLOTS) {
     if (candidates[slot].length === 1) selected[slot] = candidates[slot][0]!.instanceId;
   }
+
+  // Defaults to the first decal found (if any) but stays fully switchable, including to "no decal".
+  let selectedDecalIndex: number | null = decalIds.length > 0 ? 0 : null;
 
   function getSelectedItem(slot: SlotType): PlacedGridItem | undefined {
     const id = selected[slot];
@@ -50,10 +58,21 @@ export function renderSynthesis(
       return `<div class="bin"><h3>${SLOT_LABELS[slot]}</h3>${buttons}</div>`;
     }).join("");
 
+    const decalBinHtml =
+      decalIds.length > 0
+        ? `<div class="bin"><h3>Decal (optional)</h3>${decalIds
+            .map(
+              (id, index) =>
+                `<button class="bin-option decal-option${selectedDecalIndex === index ? " selected" : ""}" data-index="${index}">${decalName(id)}</button>`
+            )
+            .join("")}<button class="bin-option decal-option${selectedDecalIndex === null ? " selected" : ""}" data-index="none">No decal</button></div>`
+        : "";
+
     const frameItem = getSelectedItem("frame");
     const skinItem = getSelectedItem("skin");
     const engineItem = getSelectedItem("engine");
     const ready = Boolean(frameItem && skinItem && engineItem);
+    const chosenDecalId = selectedDecalIndex !== null ? (decalIds[selectedDecalIndex] ?? null) : null;
 
     let previewHtml = `<p><em>Select one item per bin to preview the craft.</em></p>`;
     if (frameItem && skinItem && engineItem) {
@@ -65,16 +84,13 @@ export function renderSynthesis(
         frame: frameComp,
         skin: skinComp,
         engine: engineComp,
-        decalId: decalIds[0] ?? null,
+        decalId: chosenDecalId,
       });
       previewHtml = `
         <div class="craft-preview">${svg}</div>
         <p>Projected stats: Thrust ${totals.thrust.toFixed(1)} &middot; Weight ${totals.weight.toFixed(1)} &middot; Drag ${totals.drag.toFixed(1)} &middot; Durability ${totals.durability.toFixed(1)}</p>
       `;
     }
-
-    const decalNote =
-      decalIds.length > 1 ? `<p>Carrying ${decalIds.length} decals (first one shown; extras kept for later).</p>` : "";
 
     const backHtml = isStuck
       ? `<p class="message">Missing a component type — you can't assemble a craft from this haul.</p>
@@ -85,9 +101,8 @@ export function renderSynthesis(
       <div class="phase-shell">
         <p class="phase-label">Run ${context.runNumber} · Tier ${context.tier}</p>
         <h1>Phase 2: Alchemist's Kitchen (Synthesis)</h1>
-        <div class="bins">${binHtml}</div>
+        <div class="bins">${binHtml}${decalBinHtml}</div>
         ${previewHtml}
-        ${decalNote}
         ${backHtml}
         <button id="advance-btn" ${ready ? "" : "disabled"}>Assemble Craft → Flight Sim</button>
       </div>
@@ -97,11 +112,19 @@ export function renderSynthesis(
   }
 
   function wireEvents(): void {
-    root.querySelectorAll<HTMLButtonElement>(".bin-option").forEach((btn) => {
+    root.querySelectorAll<HTMLButtonElement>(".bin-option:not(.decal-option)").forEach((btn) => {
       btn.addEventListener("click", () => {
         const slot = btn.dataset.slot as SlotType;
         const instanceId = btn.dataset.instance!;
         selected[slot] = instanceId;
+        draw();
+      });
+    });
+
+    root.querySelectorAll<HTMLButtonElement>(".decal-option").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const value = btn.dataset.index!;
+        selectedDecalIndex = value === "none" ? null : Number(value);
         draw();
       });
     });
@@ -111,7 +134,8 @@ export function renderSynthesis(
       const skinItem = getSelectedItem("skin");
       const engineItem = getSelectedItem("engine");
       if (!frameItem || !skinItem || !engineItem) return;
-      onAdvance(assembleCraft(frameItem, skinItem, engineItem, decalIds[0] ?? null));
+      const chosenDecalId = selectedDecalIndex !== null ? (decalIds[selectedDecalIndex] ?? null) : null;
+      onAdvance(assembleCraft(frameItem, skinItem, engineItem, chosenDecalId));
     });
 
     root.querySelector<HTMLButtonElement>("#back-btn")?.addEventListener("click", () => {
