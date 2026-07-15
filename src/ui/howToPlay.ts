@@ -9,7 +9,7 @@ const HELP_HTML = `
   <p>Rare and uncommon color rolls give stat bonuses and show a &#9733; or &#10022; badge on the finished craft, independent of hue.</p>
 `;
 
-export function mountHowToPlay(container: HTMLElement): void {
+export function mountHowToPlay(container: HTMLElement, onReplayIntro: () => void): void {
   const button = document.createElement("button");
   button.id = "how-to-play-btn";
   button.type = "button";
@@ -25,10 +25,16 @@ export function mountHowToPlay(container: HTMLElement): void {
   overlay.innerHTML = `
     <div class="how-to-play-panel">
       ${HELP_HTML}
+      <button id="replay-intro-btn" type="button">Watch Intro Again</button>
       <button id="how-to-play-close" type="button">Close</button>
     </div>
   `;
   container.appendChild(overlay);
+
+  overlay.querySelector<HTMLButtonElement>("#replay-intro-btn")!.addEventListener("click", () => {
+    overlay.style.display = "none";
+    onReplayIntro();
+  });
 
   function setOpen(open: boolean): void {
     overlay.style.display = open ? "flex" : "none";

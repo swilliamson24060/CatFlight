@@ -1,7 +1,9 @@
 import "./style.css";
 import { mountApp } from "./ui/app";
 import { mountHowToPlay } from "./ui/howToPlay";
+import { mountIntro } from "./ui/intro";
 
 const root = document.querySelector<HTMLDivElement>("#app")!;
 mountApp(root);
-mountHowToPlay(document.body);
+const intro = mountIntro(document.body);
+mountHowToPlay(document.body, () => intro.replay());
