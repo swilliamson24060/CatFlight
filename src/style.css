@@ -146,6 +146,72 @@ th {
   font-weight: 600;
 }
 
+.kitchen-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(31, 46, 38, 0.55);
+  z-index: 250;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.kitchen-modal {
+  position: relative;
+  background: #fbf8ee;
+  border: 2px solid #8bc9a8;
+  border-radius: 10px;
+  box-shadow: 0 8px 28px rgba(31, 46, 38, 0.35);
+  max-width: 720px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  display: flex;
+  gap: 1.5rem;
+  padding: 1.5rem;
+}
+
+.kitchen-modal-left {
+  flex: 1 1 260px;
+  min-width: 0;
+}
+
+.kitchen-modal-left h3 {
+  margin-top: 0;
+  color: #2f5f45;
+}
+
+.kitchen-modal-right {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.kitchen-modal-right .grid {
+  max-width: 100%;
+  margin-bottom: 0;
+}
+
+.kitchen-modal-close {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.75rem;
+  background: none;
+  border: none;
+  font-size: 1.75rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #4c9a6f;
+  padding: 0.25rem;
+}
+
+@media (max-width: 640px) {
+  .kitchen-modal {
+    flex-direction: column;
+    max-height: 90vh;
+  }
+}
+
 .success {
   color: #1a7a3a;
   font-weight: 600;
@@ -399,8 +465,9 @@ th {
   padding: 0.6rem 1rem;
   font-size: 0.9rem;
   border-radius: 999px;
-  border: 1px solid #999;
-  background: #fff;
+  border: 1px solid #4c9a6f;
+  background: #eaf5ef;
+  color: #2f5f45;
   cursor: pointer;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
@@ -408,7 +475,7 @@ th {
 #how-to-play-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(31, 46, 38, 0.55);
   z-index: 200;
   align-items: center;
   justify-content: center;
@@ -416,27 +483,55 @@ th {
 }
 
 .how-to-play-panel {
-  background: #fff;
-  border-radius: 8px;
-  padding: 1.5rem;
+  background: #fbf8ee;
+  border: 2px solid #8bc9a8;
+  border-radius: 10px;
+  padding: 0;
   max-width: 480px;
   max-height: 80vh;
   overflow-y: auto;
+  box-shadow: 0 8px 28px rgba(31, 46, 38, 0.35);
 }
 
 .how-to-play-panel h2 {
-  margin-top: 0;
+  margin: 0;
+  padding: 1.1rem 1.5rem;
+  background: #4c9a6f;
+  color: #fff;
+  border-radius: 8px 8px 0 0;
+}
+
+.how-to-play-panel ol,
+.how-to-play-panel > p {
+  padding: 0 1.5rem;
+}
+
+.how-to-play-panel > p {
+  padding-bottom: 0.5rem;
 }
 
 .how-to-play-panel li {
   margin-bottom: 0.75rem;
 }
 
+.how-to-play-panel li strong {
+  color: #2f5f45;
+}
+
 .how-to-play-panel button {
-  margin-top: 1rem;
+  margin: 0 0 1.5rem 1.5rem;
   padding: 0.5rem 1rem;
   cursor: pointer;
-  margin-right: 0.5rem;
+  border-radius: 6px;
+  border: 1px solid #999;
+  background: #fff;
+}
+
+.how-to-play-panel #replay-intro-btn {
+  background: #8bc9a8;
+  border-color: #4c9a6f;
+  color: #14301f;
+  font-weight: 600;
 }
 
 .sr-only {

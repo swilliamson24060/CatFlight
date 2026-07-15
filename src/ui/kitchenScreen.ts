@@ -55,7 +55,18 @@ export function renderKitchen(
 
   let held: HeldItem | null = null;
   let openSourceId: string | null = null;
+  let gridModalOpen = false;
   let message: string | null = null;
+
+  function closeModal(): void {
+    if (held) {
+      pendingTray.push({ instanceId: held.instanceId, template: held.template, color: held.color });
+      held = null;
+    }
+    openSourceId = null;
+    gridModalOpen = false;
+    message = null;
+  }
 
   function draw(): void {
     const tally = computeStatTally(placedItems.map((p) => applyRarityBonus(p.template.baseStats, p.color)));
@@ -73,10 +84,12 @@ export function renderKitchen(
       })
       .join("");
 
-    const openSource = openSourceId ? layout.find((a) => a.source.id === openSourceId) : undefined;
-    const revealPanelHtml = openSource
+    const modalOpen = openSourceId !== null || gridModalOpen;
+    const activeSource = openSourceId ? layout.find((a) => a.source.id === openSourceId) : undefined;
+
+    const revealListHtml = activeSource
       ? (() => {
-          const remaining = pendingReveals.get(openSource.source.id) ?? [];
+          const remaining = pendingReveals.get(activeSource.source.id) ?? [];
           const itemsHtml =
             remaining.length > 0
               ? remaining
@@ -92,13 +105,7 @@ export function renderKitchen(
                   })
                   .join("")
               : "<p><em>Nothing left to search here.</em></p>";
-          return `
-            <div class="reveal-panel">
-              <h3>${openSource.source.name}</h3>
-              ${itemsHtml}
-              <button type="button" id="close-reveal-btn">Close</button>
-            </div>
-          `;
+          return `<div class="reveal-panel">${itemsHtml}</div>`;
         })()
       : "";
 
@@ -139,6 +146,27 @@ export function renderKitchen(
       ? `<p>Holding: ${ITEM_GLYPHS[held.template.id] ?? ""} <strong>${held.template.name}</strong> (${held.footprint.width}x${held.footprint.height}) <button id="rotate-btn">Rotate</button> <button id="cancel-btn">Put back in tray</button> <button id="discard-held-btn">Discard</button></p>`
       : `<p>Nothing held — click a tray item to pick it up.</p>`;
 
+    const modalHtml = modalOpen
+      ? `
+        <div class="kitchen-modal-overlay" id="kitchen-modal-overlay">
+          <div class="kitchen-modal">
+            <button type="button" class="kitchen-modal-close" id="close-modal-btn" aria-label="Close">&times;</button>
+            <div class="kitchen-modal-left">
+              <h3>${activeSource ? activeSource.source.name : "Your Grid"}</h3>
+              ${revealListHtml}
+              <h4>Tray</h4>
+              <div class="tray">${trayHtml}</div>
+              ${heldHtml}
+              ${message ? `<p class="message">${message}</p>` : ""}
+            </div>
+            <div class="kitchen-modal-right">
+              <div class="grid" style="grid-template-columns: repeat(${gridSize}, 1fr);">${gridHtml}${shapesHtml}</div>
+            </div>
+          </div>
+        </div>
+      `
+      : "";
+
     root.innerHTML = `
       <div class="phase-shell">
         <p class="phase-label">Run ${context.runNumber} · Tier ${context.tier} · Trip ${context.tripCount + 1}</p>
@@ -149,20 +177,13 @@ export function renderKitchen(
           ${composeKitchenBackground()}
           ${hotspotsHtml}
         </div>
-        ${revealPanelHtml}
-
-        <h2>Tray</h2>
-        <div class="tray">${trayHtml}</div>
-
-        ${heldHtml}
-        ${message ? `<p class="message">${message}</p>` : ""}
-
-        <h2>Inventory Grid (${gridSize}&times;${gridSize})</h2>
-        <div class="grid" style="grid-template-columns: repeat(${gridSize}, 1fr);">${gridHtml}${shapesHtml}</div>
 
         <p>Carried stat tally: Thrust ${tally.thrust.toFixed(1)} &middot; Weight ${tally.weight.toFixed(1)} &middot; Drag ${tally.drag.toFixed(1)} &middot; Durability ${tally.durability.toFixed(1)}</p>
 
+        <button type="button" id="view-grid-btn">View Grid (${placedItems.length} placed)</button>
         <button id="advance-btn">Return to Doc's Workbench</button>
+
+        ${modalHtml}
       </div>
     `;
 
@@ -180,9 +201,21 @@ export function renderKitchen(
       });
     });
 
-    root.querySelector<HTMLButtonElement>("#close-reveal-btn")?.addEventListener("click", () => {
-      openSourceId = null;
+    root.querySelector<HTMLButtonElement>("#view-grid-btn")?.addEventListener("click", () => {
+      gridModalOpen = true;
       draw();
+    });
+
+    root.querySelector<HTMLButtonElement>("#close-modal-btn")?.addEventListener("click", () => {
+      closeModal();
+      draw();
+    });
+
+    root.querySelector<HTMLDivElement>("#kitchen-modal-overlay")?.addEventListener("click", (event) => {
+      if (event.target === event.currentTarget) {
+        closeModal();
+        draw();
+      }
     });
 
     root.querySelectorAll<HTMLButtonElement>(".keep-btn").forEach((btn) => {
