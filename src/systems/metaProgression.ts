@@ -6,12 +6,13 @@ export interface MetaState {
   gridExpansionLevel: number;
   junkFilterLevel: number;
   rerollLevel: number;
+  luckLevel: number;
 }
 
 const STORAGE_KEY = "catflight-meta-v1";
 
 export function createDefaultMetaState(): MetaState {
-  return { scrap: 0, gridExpansionLevel: 0, junkFilterLevel: 0, rerollLevel: 0 };
+  return { scrap: 0, gridExpansionLevel: 0, junkFilterLevel: 0, rerollLevel: 0, luckLevel: 0 };
 }
 
 export function loadMetaState(): MetaState {
@@ -44,7 +45,12 @@ export function computeScrapReward(outcome: FlightOutcome): number {
   return 5 + outcome.gatesCleared * 5;
 }
 
-export type UpgradeId = "gridExpansion" | "junkFilter" | "reroll";
+/** Fed into rollColor as an exponent bias; 0 at level 0 leaves the roll unchanged. */
+export function computeLuckBias(meta: MetaState): number {
+  return meta.luckLevel * 0.25;
+}
+
+export type UpgradeId = "gridExpansion" | "junkFilter" | "reroll" | "luck";
 
 export interface UpgradeDef {
   id: UpgradeId;
@@ -76,6 +82,13 @@ export const UPGRADES: UpgradeDef[] = [
     maxLevel: 3,
     costForLevel: (level) => 10 + level * 10,
   },
+  {
+    id: "luck",
+    name: "Golden Whisker",
+    description: "Increases the odds of uncommon and rare color rolls.",
+    maxLevel: 5,
+    costForLevel: (level) => 20 + level * 20,
+  },
 ];
 
 export function getUpgradeLevel(meta: MetaState, id: UpgradeId): number {
@@ -86,6 +99,8 @@ export function getUpgradeLevel(meta: MetaState, id: UpgradeId): number {
       return meta.junkFilterLevel;
     case "reroll":
       return meta.rerollLevel;
+    case "luck":
+      return meta.luckLevel;
   }
 }
 
@@ -106,6 +121,9 @@ export function purchaseUpgrade(meta: MetaState, id: UpgradeId): MetaState {
       break;
     case "reroll":
       updated.rerollLevel = level + 1;
+      break;
+    case "luck":
+      updated.luckLevel = level + 1;
       break;
   }
   return updated;

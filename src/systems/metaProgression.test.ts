@@ -4,11 +4,13 @@ import {
   computeCountertopSize,
   computeEffectiveJunkDensity,
   computeGridSize,
+  computeLuckBias,
   computeScrapReward,
   createDefaultMetaState,
   getUpgradeLevel,
   purchaseUpgrade,
 } from "./metaProgression";
+import { rollColor } from "./scavenge";
 import type { FlightOutcome } from "./flightSim";
 
 function outcomeWith(gatesCleared: number): FlightOutcome {
@@ -40,6 +42,38 @@ describe("computeScrapReward", () => {
     expect(computeScrapReward(outcomeWith(0))).toBe(5);
     expect(computeScrapReward(outcomeWith(1))).toBe(10);
     expect(computeScrapReward(outcomeWith(3))).toBe(20);
+  });
+});
+
+describe("computeLuckBias", () => {
+  it("is zero at level 0 and scales linearly with luckLevel", () => {
+    expect(computeLuckBias(createDefaultMetaState())).toBe(0);
+    expect(computeLuckBias({ ...createDefaultMetaState(), luckLevel: 4 })).toBeCloseTo(1, 5);
+  });
+});
+
+describe("rollColor with luckBias", () => {
+  it("leaves the roll unchanged at bias 0", () => {
+    // A bias of 0 must reduce to the identity exponent (1), i.e. Math.random() unmodified.
+    const samples = Array.from({ length: 5000 }, () => rollColor(0).brilliance);
+    const mean = samples.reduce((a, b) => a + b, 0) / samples.length;
+    expect(mean).toBeGreaterThan(0.45);
+    expect(mean).toBeLessThan(0.55);
+  });
+
+  it("skews brilliance upward as bias increases", () => {
+    const unbiased = Array.from({ length: 5000 }, () => rollColor(0).brilliance);
+    const biased = Array.from({ length: 5000 }, () => rollColor(1).brilliance);
+    const mean = (samples: number[]) => samples.reduce((a, b) => a + b, 0) / samples.length;
+    expect(mean(biased)).toBeGreaterThan(mean(unbiased));
+  });
+
+  it("always stays within [0, 1]", () => {
+    for (let i = 0; i < 1000; i++) {
+      const { brilliance } = rollColor(2);
+      expect(brilliance).toBeGreaterThanOrEqual(0);
+      expect(brilliance).toBeLessThanOrEqual(1);
+    }
   });
 });
 

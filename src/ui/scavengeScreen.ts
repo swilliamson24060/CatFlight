@@ -7,7 +7,13 @@ import {
   rotateFootprint,
   type Occupancy,
 } from "../systems/grid";
-import { computeCountertopSize, computeEffectiveJunkDensity, computeGridSize, type MetaState } from "../systems/metaProgression";
+import {
+  computeCountertopSize,
+  computeEffectiveJunkDensity,
+  computeGridSize,
+  computeLuckBias,
+  type MetaState,
+} from "../systems/metaProgression";
 import { applyRarityBonus, computeStatTally, generateCountertop, type CountertopItem } from "../systems/scavenge";
 import type { Footprint } from "../types/core";
 import type { ItemTemplate } from "../types/content";
@@ -29,8 +35,9 @@ export function renderScavenge(
   const gridSize = computeGridSize(meta);
   const countertopSize = computeCountertopSize(meta);
   const effectiveJunkDensity = computeEffectiveJunkDensity(context.difficulty.junkDensity, meta);
+  const luckBias = computeLuckBias(meta);
 
-  let countertop: CountertopItem[] = generateCountertop(effectiveJunkDensity, countertopSize);
+  let countertop: CountertopItem[] = generateCountertop(effectiveJunkDensity, countertopSize, luckBias);
   let rerollsRemaining = meta.rerollLevel;
   const decalPouch: string[] = [];
   const occupancy: Occupancy = createEmptyOccupancy(gridSize);
@@ -138,7 +145,7 @@ export function renderScavenge(
     root.querySelector<HTMLButtonElement>("#reroll-btn")?.addEventListener("click", () => {
       if (held || rerollsRemaining <= 0) return;
       rerollsRemaining -= 1;
-      countertop = generateCountertop(effectiveJunkDensity, countertopSize);
+      countertop = generateCountertop(effectiveJunkDensity, countertopSize, luckBias);
       message = null;
       draw();
     });

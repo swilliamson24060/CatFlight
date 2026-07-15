@@ -26,8 +26,10 @@ function weightedPick<T extends { spawnWeight: number }>(pool: T[]): T {
   return pool[pool.length - 1]!;
 }
 
-export function rollColor(): ItemColor {
-  return { hue: Math.random() * 360, brilliance: Math.random() };
+/** luckBias 0 leaves the roll unchanged; higher values skew brilliance upward toward 1. */
+export function rollColor(luckBias = 0): ItemColor {
+  const brilliance = Math.random() ** (1 / (1 + luckBias));
+  return { hue: Math.random() * 360, brilliance };
 }
 
 export const DEFAULT_COUNTERTOP_SIZE = 12;
@@ -46,7 +48,11 @@ function shuffle<T>(array: T[]): T[] {
  * Always includes at least one Frame, one Skin, and one Engine candidate so a run can
  * never generate a countertop that makes synthesis impossible (see softlock fix).
  */
-export function generateCountertop(junkDensity: number, countertopSize: number = DEFAULT_COUNTERTOP_SIZE): CountertopItem[] {
+export function generateCountertop(
+  junkDensity: number,
+  countertopSize: number = DEFAULT_COUNTERTOP_SIZE,
+  luckBias = 0
+): CountertopItem[] {
   const junkTemplates = ITEM_POOL.filter((item) => item.slotType === "junk");
   const usefulTemplates = ITEM_POOL.filter((item) => item.slotType !== "junk");
   const frameTemplates = ITEM_POOL.filter((item) => item.slotType === "frame");
@@ -58,12 +64,12 @@ export function generateCountertop(junkDensity: number, countertopSize: number =
     instanceId: makeInstanceId(),
     kind: "grid",
     template,
-    color: rollColor(),
+    color: rollColor(luckBias),
   }));
 
   for (let i = items.length; i < countertopSize; i++) {
     const template = Math.random() < junkDensity ? weightedPick(junkTemplates) : weightedPick(usefulTemplates);
-    items.push({ instanceId: makeInstanceId(), kind: "grid", template, color: rollColor() });
+    items.push({ instanceId: makeInstanceId(), kind: "grid", template, color: rollColor(luckBias) });
   }
 
   const shuffled = shuffle(items);
