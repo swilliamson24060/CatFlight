@@ -47,6 +47,7 @@ export function renderMetaUpgrade(
         <h1>Phase 4: Mousehole HQ</h1>
         ${outcomeSummary}
         <p class="scrap-balance">Scrap: ${meta.scrap}</p>
+        <p class="best-tier">Best tier reached: ${meta.bestTier}</p>
         <div class="upgrades">${upgradeCards}</div>
         <p>Next run is tier ${context.tier + 1}.</p>
         <button id="advance-btn">Start Next Run → Scavenge</button>

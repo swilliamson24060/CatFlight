@@ -7,12 +7,13 @@ export interface MetaState {
   junkFilterLevel: number;
   rerollLevel: number;
   luckLevel: number;
+  bestTier: number;
 }
 
 const STORAGE_KEY = "catflight-meta-v1";
 
 export function createDefaultMetaState(): MetaState {
-  return { scrap: 0, gridExpansionLevel: 0, junkFilterLevel: 0, rerollLevel: 0, luckLevel: 0 };
+  return { scrap: 0, gridExpansionLevel: 0, junkFilterLevel: 0, rerollLevel: 0, luckLevel: 0, bestTier: 0 };
 }
 
 export function loadMetaState(): MetaState {

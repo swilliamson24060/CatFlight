@@ -35,7 +35,11 @@ export function mountApp(root: HTMLElement): void {
         break;
       case "flightSim":
         renderFlightSim(root, context, (outcome) => {
-          meta = { ...meta, scrap: meta.scrap + computeScrapReward(outcome) };
+          meta = {
+            ...meta,
+            scrap: meta.scrap + computeScrapReward(outcome),
+            bestTier: Math.max(meta.bestTier, context.tier),
+          };
           saveMetaState(meta);
           context = { ...context, lastFlightOutcome: outcome };
           machine.advance();
