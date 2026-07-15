@@ -1,4 +1,4 @@
-import type { PieceCategory } from "../types/core";
+import type { FunctionalPieceCategory, PieceCategory } from "../types/core";
 
 export interface CategoryColor {
   fill: string;
@@ -25,3 +25,25 @@ export const CATEGORY_LABELS: Record<PieceCategory, string> = {
   harness: "Harness",
   decoration: "Decoration",
 };
+
+/** Display-only grouping of the 6 real categories into the 4 things Doc says he's searching
+ * for -- purely presentational, used for the kitchen-phase reminder and Workshop briefing.
+ * Doc's Workbench still shows the real 6 bins. */
+export interface DisplayGroup {
+  label: string;
+  categories: FunctionalPieceCategory[];
+}
+
+export const DISPLAY_GROUPS: DisplayGroup[] = [
+  { label: "Wing Membranes", categories: ["wingMembrane"] },
+  { label: "Engine Parts", categories: ["powerSource"] },
+  { label: "Structural Parts", categories: ["wingFlapper", "aeroHelper", "attachment"] },
+  { label: "Harness Material", categories: ["harness"] },
+];
+
+export function summarizeBlueprintForDisplay(requirements: Record<FunctionalPieceCategory, number>): string {
+  return DISPLAY_GROUPS.map((group) => {
+    const total = group.categories.reduce((sum, cat) => sum + requirements[cat], 0);
+    return `${group.label} &times;${total}`;
+  }).join(" &middot; ");
+}

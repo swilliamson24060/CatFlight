@@ -25,7 +25,7 @@ export function createInitialRunContext(): RunContext {
     runNumber: 1,
     tier: 0,
     difficulty: generateDifficultyTier(0),
-    blueprint: generateBlueprint(0),
+    blueprint: generateBlueprint(),
     tripCount: 0,
   };
 }
@@ -37,7 +37,7 @@ export function advanceToNextRun(context: RunContext): RunContext {
     runNumber: context.runNumber + 1,
     tier,
     difficulty: generateDifficultyTier(tier),
-    blueprint: generateBlueprint(tier),
+    blueprint: generateBlueprint(),
     tripCount: 0,
   };
 }

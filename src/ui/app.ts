@@ -26,18 +26,10 @@ export function mountApp(root: HTMLElement): void {
         });
         break;
       case "synthesis":
-        renderSynthesis(
-          root,
-          context,
-          meta,
-          (craft, excessPieces) => {
-            context = { ...context, craft, excessPieces };
-            machine.advance();
-          },
-          () => {
-            machine.setPhase("scavenge");
-          }
-        );
+        renderSynthesis(root, context, meta, (craft, excessPieces) => {
+          context = { ...context, craft, excessPieces };
+          machine.advance();
+        });
         break;
       case "flightSim":
         renderFlightSim(root, context, (outcome) => {

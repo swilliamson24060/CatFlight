@@ -59,23 +59,36 @@ function rollReveal(source: KitchenSourceTemplate, junkDensity: number, luckBias
   return makePiece(chosen.template.id, luckBias);
 }
 
-const TARGET_ACTIVE_SOURCES = 6;
+const TARGET_ACTIVE_SOURCES = 5;
 
 /**
- * Activates a subset of KITCHEN_SOURCES for this run and rolls each one's reveals up front (the
- * reveal itself stays hidden from the player until they click the hotspot). Guarantees at least
- * one real candidate exists for every functional category -- an invisible fairness backstop
- * against unwinnable runs, generalizing the original countertop guarantee.
+ * Activates a subset of KITCHEN_SOURCES for this run (capped at TARGET_ACTIVE_SOURCES) and rolls
+ * each one's reveals up front (the reveal itself stays hidden from the player until they click
+ * the hotspot). Best-effort guarantees at least one real candidate exists for every functional
+ * category, preferring to reuse an already-active source so the area cap holds; if the cap is
+ * already reached and no active source can cover a remaining category, that category's coverage
+ * simply isn't guaranteed this trip (the retry loop handles bad luck, same as everywhere else).
  */
 export function generateKitchenLayout(junkDensity: number, luckBias = 0): ActiveKitchenSource[] {
   const activeIds = new Set<string>();
   const forcedTemplatesBySource = new Map<string, string[]>();
 
-  for (const category of FUNCTIONAL_CATEGORIES as FunctionalPieceCategory[]) {
+  const shuffledCategories = [...FUNCTIONAL_CATEGORIES].sort(() => Math.random() - 0.5) as FunctionalPieceCategory[];
+
+  for (const category of shuffledCategories) {
     const candidateTemplates = PIECE_POOL.filter((t) => t.categories.includes(category));
     const guaranteedTemplate = weightedPick(candidateTemplates, (t) => t.spawnWeight);
     const candidateSources = sourcesContaining(guaranteedTemplate.id);
-    const targetSource = candidateSources[Math.floor(Math.random() * candidateSources.length)]!;
+    const alreadyActive = candidateSources.filter((s) => activeIds.has(s.id));
+
+    let targetSource: KitchenSourceTemplate;
+    if (alreadyActive.length > 0) {
+      targetSource = alreadyActive[Math.floor(Math.random() * alreadyActive.length)]!;
+    } else if (activeIds.size < TARGET_ACTIVE_SOURCES) {
+      targetSource = candidateSources[Math.floor(Math.random() * candidateSources.length)]!;
+    } else {
+      continue;
+    }
 
     activeIds.add(targetSource.id);
     const forced = forcedTemplatesBySource.get(targetSource.id) ?? [];

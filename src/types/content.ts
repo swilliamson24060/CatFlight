@@ -32,9 +32,8 @@ export interface KitchenSourceTemplate {
   revealPool: { templateId: string; weight?: number }[];
 }
 
-/** Per-tier quotas for the 6 functional categories. Decoration is deliberately excluded -- it's bonus-only. */
+/** Randomly rolled quotas for the 6 functional categories. Decoration is deliberately excluded -- it's bonus-only. */
 export interface Blueprint {
-  tier: number;
   requirements: Record<FunctionalPieceCategory, number>;
 }
 
@@ -48,12 +47,9 @@ export interface RarityBand {
   hueOverride?: number;
 }
 
-/** Scaling parameters for one difficulty tier of the procedural flight sim gates. */
+/** Scaling parameters for one difficulty tier. Flight success is now driven by blueprint
+ * fulfillment (see systems/flightSim.ts), not stat thresholds -- junkDensity is all that's left. */
 export interface DifficultyTier {
   tier: number;
-  launchThreshold: number;
-  midflightThreshold: number;
-  glideMin: number;
-  glideMax: number;
   junkDensity: number;
 }

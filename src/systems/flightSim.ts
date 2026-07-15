@@ -1,6 +1,3 @@
-import type { DifficultyTier } from "../types/content";
-import type { Stats } from "../types/core";
-
 export type FlightGate = "launch" | "midflight" | "landing";
 export type LandingMissReason = "overshoot" | "undershoot";
 
@@ -9,21 +6,22 @@ export interface FlightOutcome {
   gatesCleared: number;
   failedAt: FlightGate | null;
   landingMissReason: LandingMissReason | null;
-  glideRatio: number;
+  fulfillmentRatio: number;
 }
 
-export function evaluateFlight(stats: Stats, difficulty: DifficultyTier): FlightOutcome {
-  const glideRatio = stats.drag / stats.weight;
-
-  if (stats.thrust < difficulty.launchThreshold) {
-    return { success: false, gatesCleared: 0, failedAt: "launch", landingMissReason: null, glideRatio };
+/**
+ * First-pass thresholds -- flagged for a balance pass, same spirit as the original stat-based
+ * curve. Success now depends on how close the assembled craft came to the blueprint, not raw stats.
+ */
+export function evaluateFlight(fulfillmentRatio: number): FlightOutcome {
+  if (fulfillmentRatio < 0.4) {
+    return { success: false, gatesCleared: 0, failedAt: "launch", landingMissReason: null, fulfillmentRatio };
   }
-  if (stats.durability < difficulty.midflightThreshold) {
-    return { success: false, gatesCleared: 1, failedAt: "midflight", landingMissReason: null, glideRatio };
+  if (fulfillmentRatio < 0.7) {
+    return { success: false, gatesCleared: 1, failedAt: "midflight", landingMissReason: null, fulfillmentRatio };
   }
-  if (glideRatio < difficulty.glideMin || glideRatio > difficulty.glideMax) {
-    const landingMissReason: LandingMissReason = glideRatio < difficulty.glideMin ? "overshoot" : "undershoot";
-    return { success: false, gatesCleared: 2, failedAt: "landing", landingMissReason, glideRatio };
+  if (fulfillmentRatio < 1) {
+    return { success: false, gatesCleared: 2, failedAt: "landing", landingMissReason: "undershoot", fulfillmentRatio };
   }
-  return { success: true, gatesCleared: 3, failedAt: null, landingMissReason: null, glideRatio };
+  return { success: true, gatesCleared: 3, failedAt: null, landingMissReason: null, fulfillmentRatio };
 }

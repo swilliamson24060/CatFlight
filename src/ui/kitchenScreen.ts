@@ -1,5 +1,5 @@
 import type { RunContext } from "../engine/runContext";
-import { CATEGORY_LABELS } from "../render/categoryColors";
+import { summarizeBlueprintForDisplay } from "../render/categoryColors";
 import { ITEM_GLYPHS } from "../render/itemGlyphs";
 import { composeKitchenBackground } from "../render/kitchenShapes";
 import {
@@ -11,17 +11,17 @@ import {
   type Occupancy,
 } from "../systems/grid";
 import { generateKitchenLayout, type ActiveKitchenSource, type KitchenPiece } from "../systems/kitchen";
-import { applyRarityBonus, computeStatTally } from "../systems/scavenge";
 import {
   computeEffectiveJunkDensity,
   computeGridSize,
   computeLuckBias,
   type MetaState,
 } from "../systems/metaProgression";
-import { FUNCTIONAL_CATEGORIES } from "../types/core";
 import type { Footprint } from "../types/core";
 import type { PieceTemplate } from "../types/content";
 import type { GridResult, PlacedGridItem } from "../types/grid";
+
+const OPENS_PER_TRIP = 3;
 
 interface HeldItem {
   instanceId: string;
@@ -57,6 +57,8 @@ export function renderKitchen(
   let openSourceId: string | null = null;
   let gridModalOpen = false;
   let message: string | null = null;
+  let showBriefing = context.tripCount === 0;
+  let opensRemaining = OPENS_PER_TRIP;
 
   function closeModal(): void {
     if (held) {
@@ -69,18 +71,15 @@ export function renderKitchen(
   }
 
   function draw(): void {
-    const tally = computeStatTally(placedItems.map((p) => applyRarityBonus(p.template.baseStats, p.color)));
-
-    const blueprintHtml = FUNCTIONAL_CATEGORIES.map(
-      (cat) => `${CATEGORY_LABELS[cat]} &times;${context.blueprint.requirements[cat]}`
-    ).join(" &middot; ");
+    const blueprintHtml = summarizeBlueprintForDisplay(context.blueprint.requirements);
 
     const hotspotsHtml = layout
       .map((active) => {
         const { source } = active;
         const searched = searchedSourceIds.has(source.id);
-        const label = searched ? `${source.name} (searched)` : source.name;
-        return `<button type="button" class="kitchen-hotspot${searched ? " searched" : ""}" data-source="${source.id}" style="left:${source.hotspot.x}%; top:${source.hotspot.y}%; width:${source.hotspot.width}%; height:${source.hotspot.height}%;" aria-label="${label}">${source.name}</button>`;
+        const locked = !searched && opensRemaining <= 0;
+        const label = searched ? `${source.name} (searched)` : locked ? `${source.name} (no searches left this trip)` : source.name;
+        return `<button type="button" class="kitchen-hotspot${searched ? " searched" : ""}${locked ? " locked" : ""}" data-source="${source.id}" style="left:${source.hotspot.x}%; top:${source.hotspot.y}%; width:${source.hotspot.width}%; height:${source.hotspot.height}%;" aria-label="${label}" ${locked ? "disabled" : ""}>${source.name}</button>`;
       })
       .join("");
 
@@ -165,23 +164,39 @@ export function renderKitchen(
       `
       : "";
 
+    const briefingHtml = showBriefing
+      ? `
+        <div class="workshop-briefing-overlay" id="workshop-briefing-overlay">
+          <div class="workshop-briefing-panel">
+            <h2>Doc's Workshop</h2>
+            <p>"Alright, here's what I need for this build:"</p>
+            <p class="workshop-briefing-list">${blueprintHtml}</p>
+            <p>You've got ${OPENS_PER_TRIP} spots you can search in the kitchen this trip -- choose wisely.</p>
+            <button type="button" id="start-searching-btn">Start Searching</button>
+          </div>
+        </div>
+      `
+      : "";
+
     root.innerHTML = `
       <div class="phase-shell">
         <p class="phase-label">Run ${context.runNumber} · Tier ${context.tier} · Trip ${context.tripCount + 1}</p>
         <h1>Phase 1: The Kitchen</h1>
         <p class="blueprint-header">Doc's blueprint calls for: ${blueprintHtml}</p>
+        <p class="opens-remaining">Searches left this trip: ${opensRemaining}</p>
 
         <div class="kitchen-scene">
           ${composeKitchenBackground()}
           ${hotspotsHtml}
         </div>
 
-        <p>Carried stat tally: Thrust ${tally.thrust.toFixed(1)} &middot; Weight ${tally.weight.toFixed(1)} &middot; Drag ${tally.drag.toFixed(1)} &middot; Durability ${tally.durability.toFixed(1)}</p>
+        <p class="blueprint-reminder">Doc still needs: ${blueprintHtml}</p>
 
         <button type="button" id="view-grid-btn">View Grid (${placedItems.length} placed)</button>
         <button id="advance-btn">Return to Doc's Workbench</button>
 
         ${modalHtml}
+        ${briefingHtml}
       </div>
     `;
 
@@ -189,11 +204,20 @@ export function renderKitchen(
   }
 
   function wireEvents(): void {
+    root.querySelector<HTMLButtonElement>("#start-searching-btn")?.addEventListener("click", () => {
+      showBriefing = false;
+      draw();
+    });
+
     root.querySelectorAll<HTMLButtonElement>(".kitchen-hotspot").forEach((btn) => {
       btn.addEventListener("click", () => {
         const sourceId = btn.dataset.source!;
+        if (!searchedSourceIds.has(sourceId)) {
+          if (opensRemaining <= 0) return;
+          opensRemaining -= 1;
+          searchedSourceIds.add(sourceId);
+        }
         openSourceId = sourceId;
-        searchedSourceIds.add(sourceId);
         message = null;
         draw();
       });

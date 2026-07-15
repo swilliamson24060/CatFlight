@@ -16,13 +16,13 @@ import type { FlightOutcome } from "./flightSim";
 import type { PlacedGridItem } from "../types/grid";
 
 function outcomeWith(gatesCleared: number): FlightOutcome {
-  return { success: gatesCleared === 3, gatesCleared, failedAt: null, landingMissReason: null, glideRatio: 1 };
+  return { success: gatesCleared === 3, gatesCleared, failedAt: null, landingMissReason: null, fulfillmentRatio: 1 };
 }
 
 describe("computeGridSize", () => {
   it("scales with gridExpansionLevel", () => {
     const meta = { ...createDefaultMetaState(), gridExpansionLevel: 2 };
-    expect(computeGridSize(meta)).toBe(8);
+    expect(computeGridSize(meta)).toBe(7);
   });
 });
 

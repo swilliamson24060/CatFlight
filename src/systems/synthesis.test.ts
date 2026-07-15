@@ -1,7 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { assembleCraft, groupCandidatesByCategory, identifyExcessPieces } from "./synthesis";
+import { assembleCraft, computeFulfillmentRatio, groupCandidatesByCategory, identifyExcessPieces } from "./synthesis";
 import type { PieceTemplate } from "../types/content";
+import type { FunctionalPieceCategory } from "../types/core";
 import type { PlacedGridItem } from "../types/grid";
+
+const REQUIREMENTS: Record<FunctionalPieceCategory, number> = {
+  wingMembrane: 1,
+  powerSource: 1,
+  wingFlapper: 1,
+  aeroHelper: 1,
+  attachment: 1,
+  harness: 1,
+};
 
 function makeItem(id: string, template: Partial<PieceTemplate> & Pick<PieceTemplate, "categories">): PlacedGridItem {
   const fullTemplate: PieceTemplate = {
@@ -43,7 +53,7 @@ describe("assembleCraft", () => {
   it("sums stats across multiple selected components in the same category", () => {
     const a = makeItem("a", { categories: ["wingMembrane"], archetype: "cardboard", baseStats: { thrust: 1, weight: 2, drag: 0, durability: 0 } });
     const b = makeItem("b", { categories: ["wingMembrane"], archetype: "plasticWrap", baseStats: { thrust: 1, weight: 3, drag: 0, durability: 0 } });
-    const craft = assembleCraft({ wingMembrane: [a, b] }, 1);
+    const craft = assembleCraft({ wingMembrane: [a, b] }, REQUIREMENTS, 1);
     expect(craft.categories.wingMembrane.components).toHaveLength(2);
     expect(craft.stats.weight).toBeCloseTo(5, 5);
   });
@@ -51,13 +61,44 @@ describe("assembleCraft", () => {
   it("applies decoration score bonuses, bigger for Fly Better pieces", () => {
     const sticker = makeItem("sticker", { categories: ["decoration"], archetype: "stickerSheet" });
     const stripe = makeItem("stripe", { categories: ["decoration"], archetype: "racingStripe", flyBetter: true });
-    const craft = assembleCraft({ decoration: [sticker, stripe] }, 1);
+    const craft = assembleCraft({ decoration: [sticker, stripe] }, REQUIREMENTS, 1);
     expect(craft.score).toBeGreaterThan(100); // base score (trip 1) + 10 + 25
   });
 
   it("populates a seedString", () => {
-    const craft = assembleCraft({}, 1);
+    const craft = assembleCraft({}, REQUIREMENTS, 1);
     expect(craft.seedString).toBeTruthy();
+  });
+
+  it("computes a craft's fulfillmentRatio from its selections vs. requirements", () => {
+    const membrane = makeItem("m", { categories: ["wingMembrane"], archetype: "cardboard" });
+    const craft = assembleCraft({ wingMembrane: [membrane] }, REQUIREMENTS, 1);
+    expect(craft.fulfillmentRatio).toBeCloseTo(1 / 6, 5); // only 1 of 6 categories fulfilled
+  });
+});
+
+describe("computeFulfillmentRatio", () => {
+  it("averages min(have/need, 1) across all 6 functional categories", () => {
+    const membrane = makeItem("m", { categories: ["wingMembrane"], archetype: "cardboard" });
+    const ratio = computeFulfillmentRatio({ wingMembrane: [membrane, membrane] }, { ...REQUIREMENTS, wingMembrane: 2 });
+    expect(ratio).toBeCloseTo(1 / 6, 5); // wingMembrane fully met (2/2, capped at 1), other 5 at 0
+  });
+
+  it("is 1 when every category is exactly met", () => {
+    const item = makeItem("x", { categories: ["harness"], archetype: "shoelaceLoop" });
+    const full: Record<FunctionalPieceCategory, number> = { ...REQUIREMENTS, harness: 1 };
+    const ratio = computeFulfillmentRatio(
+      {
+        wingMembrane: [item],
+        powerSource: [item],
+        wingFlapper: [item],
+        aeroHelper: [item],
+        attachment: [item],
+        harness: [item],
+      },
+      full
+    );
+    expect(ratio).toBeCloseTo(1, 5);
   });
 });
 

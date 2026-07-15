@@ -65,7 +65,6 @@ type Phase = "idle" | "animating" | "revealed";
 
 export function renderFlightSim(root: HTMLElement, context: RunContext, onAdvance: (outcome: FlightOutcome) => void): void {
   const craft = context.craft;
-  const d = context.difficulty;
   let outcome: FlightOutcome | null = null;
   let phase: Phase = "idle";
   let shareMessage: { text: string; ok: boolean } | null = null;
@@ -79,7 +78,9 @@ export function renderFlightSim(root: HTMLElement, context: RunContext, onAdvanc
          <p>Stats: Thrust ${craft.stats.thrust.toFixed(1)} &middot; Weight ${craft.stats.weight.toFixed(1)} &middot; Drag ${craft.stats.drag.toFixed(1)} &middot; Durability ${craft.stats.durability.toFixed(1)}</p>`
       : `<p><em>No craft assembled.</em></p>`;
 
-    const thresholdsHtml = `<p>Gates: Launch &ge; ${d.launchThreshold}, Midflight &ge; ${d.midflightThreshold}, Glide ratio in [${d.glideMin.toFixed(2)}, ${d.glideMax.toFixed(2)}].</p>`;
+    const thresholdsHtml = craft
+      ? `<p>Blueprint fulfillment: ${Math.round(craft.fulfillmentRatio * 100)}% — 100% is a guaranteed clean flight.</p>`
+      : "";
 
     let actionHtml = "";
     if (phase === "idle") {
@@ -132,7 +133,7 @@ export function renderFlightSim(root: HTMLElement, context: RunContext, onAdvanc
   function wireEvents(): void {
     root.querySelector<HTMLButtonElement>("#launch-btn")?.addEventListener("click", () => {
       if (!craft) return;
-      outcome = evaluateFlight(craft.stats, d);
+      outcome = evaluateFlight(craft.fulfillmentRatio);
       phase = "animating";
       draw();
     });

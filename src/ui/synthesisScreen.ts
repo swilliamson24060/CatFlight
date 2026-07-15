@@ -6,6 +6,7 @@ import { computeBlueprintEase, computeYieldBoost, type MetaState } from "../syst
 import {
   assembleCraft,
   chooseHero,
+  computeFulfillmentRatio,
   groupCandidatesByCategory,
   identifyExcessPieces,
   resolveComponent,
@@ -20,8 +21,7 @@ export function renderSynthesis(
   root: HTMLElement,
   context: RunContext,
   meta: MetaState,
-  onAdvance: (craft: CraftRecord, excessPieces: PlacedGridItem[]) => void,
-  onBack: () => void
+  onAdvance: (craft: CraftRecord, excessPieces: PlacedGridItem[]) => void
 ): void {
   const placedItems = context.lastGridResult?.placedItems ?? [];
   const candidates = groupCandidatesByCategory(placedItems);
@@ -32,7 +32,9 @@ export function renderSynthesis(
     return Math.max(1, context.blueprint.requirements[category] - ease);
   }
 
-  const isStuck = FUNCTIONAL_CATEGORIES.some((cat) => candidates[cat].length === 0);
+  const effectiveRequirements = Object.fromEntries(
+    FUNCTIONAL_CATEGORIES.map((cat) => [cat, effectiveRequirement(cat)])
+  ) as Record<FunctionalPieceCategory, number>;
 
   const selected: Partial<Record<PieceCategory, string[]>> = {};
 
@@ -55,10 +57,6 @@ export function renderSynthesis(
         .filter((item): item is PlacedGridItem => Boolean(item));
     }
     return result;
-  }
-
-  function isReady(): boolean {
-    return FUNCTIONAL_CATEGORIES.every((cat) => (selected[cat]?.length ?? 0) === effectiveRequirement(cat));
   }
 
   function draw(): void {
@@ -109,15 +107,8 @@ export function renderSynthesis(
       previewHtml = `<div class="craft-preview">${svg}</div>`;
     }
 
-    const anyShort = FUNCTIONAL_CATEGORIES.some((cat) => candidates[cat].length < effectiveRequirement(cat));
-    const backHtml = anyShort
-      ? `<p class="message">${
-          isStuck
-            ? "Missing a component type — you can't assemble a craft from this haul."
-            : "Not quite enough of something yet."
-        }</p>
-         <button id="back-btn">Return to Kitchen</button>`
-      : "";
+    const fulfillmentPct = Math.round(computeFulfillmentRatio(selections, effectiveRequirements) * 100);
+    const fulfillmentHtml = `<p>Blueprint fulfillment: ${fulfillmentPct}% — the closer to 100%, the better your flight odds.</p>`;
 
     root.innerHTML = `
       <div class="phase-shell">
@@ -125,8 +116,8 @@ export function renderSynthesis(
         <h1>Phase 2: Doc's Workbench</h1>
         <div class="bins">${binHtml}</div>
         ${previewHtml}
-        ${backHtml}
-        <button id="advance-btn" ${isReady() ? "" : "disabled"}>Assemble Craft → Flight Sim</button>
+        ${fulfillmentHtml}
+        <button id="advance-btn">Assemble Craft → Flight Sim</button>
       </div>
     `;
 
@@ -151,16 +142,11 @@ export function renderSynthesis(
     });
 
     root.querySelector<HTMLButtonElement>("#advance-btn")!.addEventListener("click", () => {
-      if (!isReady()) return;
       const selections = getSelections();
-      const craft = assembleCraft(selections, context.tripCount + 1, yieldBoost);
+      const craft = assembleCraft(selections, effectiveRequirements, context.tripCount + 1, yieldBoost);
       const excessPieces = identifyExcessPieces(placedItems, selections);
       playAssemble();
       onAdvance(craft, excessPieces);
-    });
-
-    root.querySelector<HTMLButtonElement>("#back-btn")?.addEventListener("click", () => {
-      onBack();
     });
   }
 

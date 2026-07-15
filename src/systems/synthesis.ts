@@ -1,8 +1,8 @@
 import { applyRarityBonus, computeStatTally } from "./scavenge";
 import { computeScore } from "./scoring";
 import { craftSeedString } from "./craftCode";
-import { ALL_CATEGORIES } from "../types/core";
-import type { PieceCategory, Stats } from "../types/core";
+import { ALL_CATEGORIES, FUNCTIONAL_CATEGORIES } from "../types/core";
+import type { FunctionalPieceCategory, PieceCategory, Stats } from "../types/core";
 import type { CraftCategoryResult, CraftComponent, CraftRecord } from "../types/craft";
 import type { PlacedGridItem } from "../types/grid";
 
@@ -41,7 +41,24 @@ export function chooseHero(components: CraftComponent[]): CraftComponent | undef
   );
 }
 
-export function assembleCraft(selections: CategorySelections, tripCount: number, yieldBoost = 0): CraftRecord {
+export function computeFulfillmentRatio(
+  selections: CategorySelections,
+  requirements: Record<FunctionalPieceCategory, number>
+): number {
+  const ratios = FUNCTIONAL_CATEGORIES.map((category) => {
+    const have = selections[category]?.length ?? 0;
+    const need = requirements[category];
+    return Math.min(have / need, 1);
+  });
+  return ratios.reduce((sum, r) => sum + r, 0) / ratios.length;
+}
+
+export function assembleCraft(
+  selections: CategorySelections,
+  requirements: Record<FunctionalPieceCategory, number>,
+  tripCount: number,
+  yieldBoost = 0
+): CraftRecord {
   const categories = {} as Record<PieceCategory, CraftCategoryResult>;
   const categoryStats: Stats[] = [];
 
@@ -71,6 +88,7 @@ export function assembleCraft(selections: CategorySelections, tripCount: number,
     categories,
     stats: boostedStats,
     score: computeScore(tripCount) + decorationBonus,
+    fulfillmentRatio: computeFulfillmentRatio(selections, requirements),
   };
   craft.seedString = craftSeedString(craft);
   return craft;
