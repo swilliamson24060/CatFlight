@@ -82,8 +82,9 @@ th {
 }
 
 .grid {
+  position: relative;
   display: grid;
-  gap: 3px;
+  gap: 0;
   max-width: 320px;
   margin-bottom: 1rem;
 }
@@ -103,9 +104,32 @@ th {
 }
 
 .cell.filled {
-  background: #8bc9a8;
-  border-color: #4c9a6f;
-  font-size: 1.1rem;
+  background: transparent;
+  border-color: transparent;
+}
+
+.placed-item-shape {
+  position: absolute;
+  box-sizing: border-box;
+  border-width: 2px;
+  border-style: solid;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+}
+
+.slot-swatch {
+  display: inline-block;
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: 3px;
+  border-width: 2px;
+  border-style: solid;
+  vertical-align: middle;
 }
 
 .craft-preview {

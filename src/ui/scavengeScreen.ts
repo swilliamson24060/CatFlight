@@ -1,6 +1,7 @@
 import type { RunContext } from "../engine/runContext";
 import { DECAL_GLYPHS } from "../render/decals";
 import { ITEM_GLYPHS } from "../render/itemGlyphs";
+import { SLOT_COLORS } from "../render/slotColors";
 import {
   canPlace,
   clearInstance,
@@ -60,7 +61,8 @@ export function renderScavenge(
             item.kind === "decal"
               ? `${item.template.name} (decal)`
               : `${item.template.name} [${(item.template as ItemTemplate).footprint.width}x${(item.template as ItemTemplate).footprint.height}]`;
-          return `<button class="counter-item" data-instance="${item.instanceId}" ${disabled}>${glyph ? `${glyph} ` : ""}${label}</button>`;
+          const accent = item.kind === "decal" ? SLOT_COLORS.decal : SLOT_COLORS[(item.template as ItemTemplate).slotType];
+          return `<button class="counter-item" data-instance="${item.instanceId}" style="border-left: 4px solid ${accent.border};" ${disabled}>${glyph ? `${glyph} ` : ""}${label}</button>`;
         })
         .join("") || "<em>Countertop cleared.</em>";
 
@@ -69,13 +71,24 @@ export function renderScavenge(
         const occupantId = occupancy[row]![col];
         const occupant = occupantId ? placedItems.find((p) => p.instanceId === occupantId) : undefined;
         const label = occupant ? `${occupant.template.name}, row ${row + 1} column ${col + 1}` : `Empty cell, row ${row + 1} column ${col + 1}`;
-        const glyph = occupant ? (ITEM_GLYPHS[occupant.template.id] ?? "") : "";
-        return `<button type="button" class="cell${occupant ? " filled" : ""}" data-row="${row}" data-col="${col}" aria-label="${label}">${glyph}</button>`;
+        return `<button type="button" class="cell${occupant ? " filled" : ""}" data-row="${row}" data-col="${col}" aria-label="${label}"></button>`;
       }).join("")
     ).join("");
 
+    const shapesHtml = placedItems
+      .map((item) => {
+        const color = SLOT_COLORS[item.template.slotType];
+        const left = (item.origin.col / gridSize) * 100;
+        const top = (item.origin.row / gridSize) * 100;
+        const width = (item.footprint.width / gridSize) * 100;
+        const height = (item.footprint.height / gridSize) * 100;
+        const glyph = ITEM_GLYPHS[item.template.id] ?? "";
+        return `<div class="placed-item-shape" style="left:${left}%; top:${top}%; width:${width}%; height:${height}%; background:${color.fill}; border-color:${color.border};">${glyph}</div>`;
+      })
+      .join("");
+
     const heldHtml = held
-      ? `<p>Holding: ${ITEM_GLYPHS[held.template.id] ?? ""} <strong>${held.template.name}</strong> (${held.footprint.width}x${held.footprint.height}) <button id="rotate-btn">Rotate</button> <button id="cancel-btn">Put back</button></p>`
+      ? `<p>Holding: <span class="slot-swatch" style="background:${SLOT_COLORS[held.template.slotType].fill}; border-color:${SLOT_COLORS[held.template.slotType].border};"></span> ${ITEM_GLYPHS[held.template.id] ?? ""} <strong>${held.template.name}</strong> (${held.footprint.width}x${held.footprint.height}) <button id="rotate-btn">Rotate</button> <button id="cancel-btn">Put back</button></p>`
       : `<p>Nothing held — click a countertop item to pick it up.</p>`;
 
     const rerollHtml = `<button id="reroll-btn" ${held || rerollsRemaining <= 0 ? "disabled" : ""}>Reroll Countertop (${rerollsRemaining} left)</button>`;
@@ -94,7 +107,7 @@ export function renderScavenge(
         ${message ? `<p class="message">${message}</p>` : ""}
 
         <h2>Inventory Grid (${gridSize}&times;${gridSize})</h2>
-        <div class="grid" style="grid-template-columns: repeat(${gridSize}, 1fr);">${gridHtml}</div>
+        <div class="grid" style="grid-template-columns: repeat(${gridSize}, 1fr);">${gridHtml}${shapesHtml}</div>
 
         <h2>Stat Tally</h2>
         <p>Thrust ${tally.thrust.toFixed(1)} &middot; Weight ${tally.weight.toFixed(1)} &middot; Drag ${tally.drag.toFixed(1)} &middot; Durability ${tally.durability.toFixed(1)}</p>
