@@ -1,7 +1,8 @@
 const MUTE_KEY = "catflight-audio-muted";
 
+/** Defaults to muted until the player explicitly turns sound on (no stored preference means "0" was never set). */
 export function isMuted(): boolean {
-  return localStorage.getItem(MUTE_KEY) === "1";
+  return localStorage.getItem(MUTE_KEY) !== "0";
 }
 
 export function setMuted(muted: boolean): void {
