@@ -1,3 +1,4 @@
+import { getRarityBand } from "../data/colorBands";
 import { DECAL_GLYPHS } from "./decals";
 import { toHslString } from "./color";
 import { ENGINE_SHAPES, FRAME_SHAPES, SKIN_SHAPES } from "./shapes";
@@ -13,6 +14,24 @@ export interface CraftVisual {
   skin: ComponentVisual;
   engine: ComponentVisual;
   decalId: string | null;
+}
+
+/**
+ * Rarity is otherwise signaled only through hue, which colorblind players can't rely on.
+ * This badge is a hue-independent glyph so the "something special" signal doesn't depend
+ * on distinguishing color -- and it doubles as the gold-tier visual flourish from the doc.
+ */
+function rarityBadgeMarkup(craft: CraftVisual): string {
+  const tiers = [craft.frame.color, craft.skin.color, craft.engine.color].map(
+    (color) => getRarityBand(color.brilliance).id
+  );
+  if (tiers.includes("rare")) {
+    return `<text x="20" y="156" font-size="22" text-anchor="middle" fill="#b8860b" stroke="#7a5a00" stroke-width="0.5">★<animate attributeName="opacity" values="0.55;1;0.55" dur="1.6s" repeatCount="indefinite" /></text>`;
+  }
+  if (tiers.includes("uncommon")) {
+    return `<text x="20" y="154" font-size="16" text-anchor="middle" fill="#777">✦</text>`;
+  }
+  return "";
 }
 
 /** Inner markup only, sized to a 240x170 viewBox -- embeddable inside any parent svg. */
@@ -38,6 +57,7 @@ export function composeCraftFragment(craft: CraftVisual): string {
       <svg x="90" y="122" width="60" height="40" viewBox="${engineShape.viewBox}">${engineShape.markup}</svg>
     </g>
     ${decalGlyph ? `<text x="205" y="28" font-size="22" text-anchor="middle">${decalGlyph}</text>` : ""}
+    ${rarityBadgeMarkup(craft)}
   `;
 }
 
