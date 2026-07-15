@@ -16,4 +16,8 @@ export const ITEM_GLYPHS: Record<string, string> = {
   soggy_sponge: "🧽",
   crumpled_napkin: "📃",
   ceramic_mug: "☕",
+  umbrella_rib: "☂️",
+  duct_tape_roll: "🩹",
+  squeaky_toy: "🦆",
+  yogurt_cup: "🥣",
 };
