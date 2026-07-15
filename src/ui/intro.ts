@@ -56,8 +56,16 @@ export function mountIntro(container: HTMLElement): IntroHandle {
     }
   }
 
+  function back(): void {
+    if (index > 0) {
+      index -= 1;
+      draw();
+    }
+  }
+
   function draw(): void {
     const panel = INTRO_PANELS[index]!;
+    const isFirst = index === 0;
     const isLast = index === INTRO_PANELS.length - 1;
     overlay.innerHTML = `
       <div class="intro-panel-wrap">
@@ -66,11 +74,13 @@ export function mountIntro(container: HTMLElement): IntroHandle {
         <div class="intro-controls">
           <span class="intro-progress">${index + 1} / ${INTRO_PANELS.length}</span>
           <button id="intro-skip" type="button">Skip</button>
+          <button id="intro-prev" type="button" ${isFirst ? "disabled" : ""}>Previous</button>
           <button id="intro-next" type="button">${isLast ? "Let's fly!" : "Next"}</button>
         </div>
       </div>
     `;
     overlay.querySelector<HTMLButtonElement>("#intro-next")!.addEventListener("click", advance);
+    overlay.querySelector<HTMLButtonElement>("#intro-prev")!.addEventListener("click", back);
     overlay.querySelector<HTMLButtonElement>("#intro-skip")!.addEventListener("click", close);
   }
 
@@ -84,6 +94,7 @@ export function mountIntro(container: HTMLElement): IntroHandle {
     if (overlay.style.display === "none") return;
     if (event.key === "Escape") close();
     else if (event.key === "Enter" || event.key === " " || event.key === "ArrowRight") advance();
+    else if (event.key === "ArrowLeft") back();
   });
 
   if (!localStorage.getItem(SEEN_KEY)) {
