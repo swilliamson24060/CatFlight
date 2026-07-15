@@ -39,22 +39,47 @@ function gateStatusHtml(outcome: FlightOutcome): string {
   }).join(" &middot; ");
 }
 
+function animationClassFor(outcome: FlightOutcome): string {
+  if (outcome.success) return "anim-success";
+  switch (outcome.failedAt) {
+    case "launch":
+      return "anim-launch-fail";
+    case "midflight":
+      return "anim-midflight-fail";
+    case "landing":
+      return outcome.landingMissReason === "overshoot" ? "anim-landing-overshoot" : "anim-landing-undershoot";
+    default:
+      return "";
+  }
+}
+
+type Phase = "idle" | "animating" | "revealed";
+
 export function renderFlightSim(root: HTMLElement, context: RunContext, onAdvance: (outcome: FlightOutcome) => void): void {
   const craft = context.craft;
   const d = context.difficulty;
   let outcome: FlightOutcome | null = null;
+  let phase: Phase = "idle";
   let shareMessage: { text: string; ok: boolean } | null = null;
 
   function draw(): void {
+    const animClass = outcome && phase !== "idle" ? animationClassFor(outcome) : "";
     const craftHtml = craft
-      ? `<div class="craft-preview">${composeCraftSvg(craft)}</div>
+      ? `<div class="craft-preview">
+           <div class="flight-stage"><div class="flight-craft ${animClass}">${composeCraftSvg(craft)}</div></div>
+         </div>
          <p>Stats: Thrust ${craft.stats.thrust.toFixed(1)} &middot; Weight ${craft.stats.weight.toFixed(1)} &middot; Drag ${craft.stats.drag.toFixed(1)} &middot; Durability ${craft.stats.durability.toFixed(1)}</p>`
       : `<p><em>No craft assembled.</em></p>`;
 
     const thresholdsHtml = `<p>Gates: Launch &ge; ${d.launchThreshold}, Midflight &ge; ${d.midflightThreshold}, Glide ratio in [${d.glideMin.toFixed(2)}, ${d.glideMax.toFixed(2)}].</p>`;
 
-    const shareHtml =
-      outcome && craft
+    let actionHtml = "";
+    if (phase === "idle") {
+      actionHtml = `<button id="launch-btn">Launch!</button>`;
+    } else if (phase === "animating") {
+      actionHtml = `<p class="flying-status"><em>Flying&hellip;</em></p>`;
+    } else if (phase === "revealed" && outcome) {
+      const shareHtml = craft
         ? `<div class="share-section">
              <p>Share code: <code>${craft.seedString}</code></p>
              <button id="copy-btn">Copy Share Code</button>
@@ -62,13 +87,13 @@ export function renderFlightSim(root: HTMLElement, context: RunContext, onAdvanc
              ${shareMessage ? `<p class="${shareMessage.ok ? "success" : "message"}">${shareMessage.text}</p>` : ""}
            </div>`
         : "";
-
-    const resultHtml = outcome
-      ? `<p class="${outcome.success ? "success" : "message"}">${flavorText(outcome)}</p>
-         <p>${gateStatusHtml(outcome)}</p>
-         ${shareHtml}
-         <button id="continue-btn">Continue → Mousehole HQ</button>`
-      : `<button id="launch-btn">Launch!</button>`;
+      actionHtml = `
+        <p class="${outcome.success ? "success" : "message"}">${flavorText(outcome)}</p>
+        <p>${gateStatusHtml(outcome)}</p>
+        ${shareHtml}
+        <button id="continue-btn">Continue → Mousehole HQ</button>
+      `;
+    }
 
     root.innerHTML = `
       <div class="phase-shell">
@@ -76,17 +101,30 @@ export function renderFlightSim(root: HTMLElement, context: RunContext, onAdvanc
         <h1>Phase 3: Test Flight Simulation</h1>
         ${craftHtml}
         ${thresholdsHtml}
-        ${resultHtml}
+        ${actionHtml}
       </div>
     `;
 
     wireEvents();
+
+    if (phase === "animating") {
+      const craftEl = root.querySelector<HTMLElement>(".flight-craft");
+      craftEl?.addEventListener(
+        "animationend",
+        () => {
+          phase = "revealed";
+          draw();
+        },
+        { once: true }
+      );
+    }
   }
 
   function wireEvents(): void {
     root.querySelector<HTMLButtonElement>("#launch-btn")?.addEventListener("click", () => {
       if (!craft) return;
       outcome = evaluateFlight(craft.stats, d);
+      phase = "animating";
       draw();
     });
 
