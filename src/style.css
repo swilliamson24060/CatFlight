@@ -441,3 +441,17 @@ th {
   border-color: #4c9a6f;
   font-weight: 600;
 }
+
+#mute-btn {
+  position: fixed;
+  bottom: 1rem;
+  left: 1rem;
+  z-index: 100;
+  padding: 0.6rem 1rem;
+  font-size: 0.9rem;
+  border-radius: 999px;
+  border: 1px solid #999;
+  background: #fff;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}

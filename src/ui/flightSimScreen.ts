@@ -1,3 +1,4 @@
+import { playLandingMiss, playLaunchFail, playMidflightFail, playSuccess } from "../audio/sfx";
 import type { RunContext } from "../engine/runContext";
 import { composeCraftCardSvg } from "../render/craftCard";
 import { composeCraftSvg } from "../render/craftComposer";
@@ -51,6 +52,13 @@ function animationClassFor(outcome: FlightOutcome): string {
     default:
       return "";
   }
+}
+
+function playOutcomeSound(outcome: FlightOutcome): void {
+  if (outcome.success) playSuccess();
+  else if (outcome.failedAt === "launch") playLaunchFail();
+  else if (outcome.failedAt === "midflight") playMidflightFail();
+  else if (outcome.failedAt === "landing") playLandingMiss();
 }
 
 type Phase = "idle" | "animating" | "revealed";
@@ -113,6 +121,7 @@ export function renderFlightSim(root: HTMLElement, context: RunContext, onAdvanc
         "animationend",
         () => {
           phase = "revealed";
+          if (outcome) playOutcomeSound(outcome);
           draw();
         },
         { once: true }

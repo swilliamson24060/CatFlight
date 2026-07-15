@@ -1,3 +1,4 @@
+import { playPurchase } from "../audio/sfx";
 import type { RunContext } from "../engine/runContext";
 import {
   UPGRADES,
@@ -61,6 +62,7 @@ export function renderMetaUpgrade(
         const id = btn.dataset.id as (typeof UPGRADES)[number]["id"];
         meta = purchaseUpgrade(meta, id);
         saveMetaState(meta);
+        playPurchase();
         draw();
       });
     });

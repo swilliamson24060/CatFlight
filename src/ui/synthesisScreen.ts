@@ -1,3 +1,4 @@
+import { playAssemble } from "../audio/sfx";
 import { DECAL_POOL } from "../data/decals";
 import type { RunContext } from "../engine/runContext";
 import { composeCraftSvg } from "../render/craftComposer";
@@ -135,6 +136,7 @@ export function renderSynthesis(
       const engineItem = getSelectedItem("engine");
       if (!frameItem || !skinItem || !engineItem) return;
       const chosenDecalId = selectedDecalIndex !== null ? (decalIds[selectedDecalIndex] ?? null) : null;
+      playAssemble();
       onAdvance(assembleCraft(frameItem, skinItem, engineItem, chosenDecalId));
     });
 
