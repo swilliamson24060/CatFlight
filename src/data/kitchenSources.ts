@@ -1,15 +1,16 @@
 import type { KitchenSourceTemplate } from "../types/content";
 
 /**
- * Fixed roster of clickable kitchen hotspots. The kitchen scene's layout never changes run to
+ * Fixed roster of clickable kitchen hotspots, positioned over the real illustrated background
+ * (public/kitchen/kitchen-background.jpeg). The kitchen scene's layout never changes run to
  * run -- what varies is which sources are active and what they roll on reveal (src/systems/kitchen.ts).
- * Hotspot coordinates are percentages of the kitchen scene's viewBox, refined visually in kitchenShapes.ts.
+ * Hotspot coordinates are percentages of the image's width/height.
  */
 export const KITCHEN_SOURCES: KitchenSourceTemplate[] = [
   {
     id: "toaster",
-    name: "Toaster",
-    hotspot: { x: 8, y: 55, width: 12, height: 10 },
+    name: "Bookshelf",
+    hotspot: { x: 8.75, y: 0, width: 20.25, height: 8 },
     revealCount: { min: 2, max: 3 },
     revealPool: [
       { templateId: "rubber_band", weight: 5 },
@@ -22,7 +23,7 @@ export const KITCHEN_SOURCES: KitchenSourceTemplate[] = [
   {
     id: "refrigerator",
     name: "Refrigerator",
-    hotspot: { x: 78, y: 15, width: 18, height: 55 },
+    hotspot: { x: 77.5, y: 0, width: 22.5, height: 78 },
     revealCount: { min: 3, max: 4 },
     revealPool: [
       { templateId: "aluminum_foil_sheet", weight: 5 },
@@ -35,8 +36,8 @@ export const KITCHEN_SOURCES: KitchenSourceTemplate[] = [
   },
   {
     id: "junk_drawer",
-    name: "Junk Drawer",
-    hotspot: { x: 35, y: 62, width: 14, height: 8 },
+    name: "Kitchen Island",
+    hotspot: { x: 35, y: 41.2, width: 21.5, height: 36.7 },
     revealCount: { min: 3, max: 5 },
     revealPool: [
       { templateId: "rubber_band", weight: 5 },
@@ -49,8 +50,8 @@ export const KITCHEN_SOURCES: KitchenSourceTemplate[] = [
   },
   {
     id: "blender",
-    name: "Blender",
-    hotspot: { x: 22, y: 52, width: 10, height: 12 },
+    name: "Stove",
+    hotspot: { x: 23, y: 35, width: 12, height: 39.4 },
     revealCount: { min: 2, max: 3 },
     revealPool: [
       { templateId: "pizza_box_flap", weight: 4 },
@@ -61,9 +62,23 @@ export const KITCHEN_SOURCES: KitchenSourceTemplate[] = [
     ],
   },
   {
+    id: "kitchen_drawer",
+    name: "Junk Drawer",
+    hotspot: { x: 0, y: 15, width: 8, height: 10 },
+    revealCount: { min: 2, max: 4 },
+    revealPool: [
+      { templateId: "rubber_band", weight: 5 },
+      { templateId: "zip_tie_pack", weight: 5 },
+      { templateId: "paper_clip_chain", weight: 6 },
+      { templateId: "duct_tape_roll", weight: 4 },
+      { templateId: "crumpled_napkin", weight: 6 },
+      { templateId: "sticker_sheet", weight: 4 },
+    ],
+  },
+  {
     id: "broom_closet",
-    name: "Broom Closet",
-    hotspot: { x: 2, y: 15, width: 10, height: 50 },
+    name: "Floor Cabinet",
+    hotspot: { x: 0, y: 25.1, width: 8, height: 47 },
     revealCount: { min: 2, max: 4 },
     revealPool: [
       { templateId: "broom_handle", weight: 5 },
@@ -75,8 +90,8 @@ export const KITCHEN_SOURCES: KitchenSourceTemplate[] = [
   },
   {
     id: "toolbox",
-    name: "Toolbox",
-    hotspot: { x: 50, y: 70, width: 12, height: 10 },
+    name: "Upper Cabinet",
+    hotspot: { x: 47, y: 0, width: 14, height: 28.7 },
     revealCount: { min: 3, max: 4 },
     revealPool: [
       { templateId: "velcro_strip", weight: 5 },
@@ -88,8 +103,8 @@ export const KITCHEN_SOURCES: KitchenSourceTemplate[] = [
   },
   {
     id: "pantry_shelf",
-    name: "Pantry Shelf",
-    hotspot: { x: 35, y: 10, width: 20, height: 12 },
+    name: "Spice Shelf",
+    hotspot: { x: 8.75, y: 9, width: 20.25, height: 17.9 },
     revealCount: { min: 2, max: 4 },
     revealPool: [
       { templateId: "cardboard_scrap", weight: 5 },
@@ -104,8 +119,8 @@ export const KITCHEN_SOURCES: KitchenSourceTemplate[] = [
   },
   {
     id: "under_sink",
-    name: "Under the Sink",
-    hotspot: { x: 60, y: 65, width: 14, height: 12 },
+    name: "Countertop",
+    hotspot: { x: 61.5, y: 20.6, width: 16.5, height: 20.6 },
     revealCount: { min: 2, max: 3 },
     revealPool: [
       { templateId: "rubber_strap_band", weight: 5 },
@@ -117,8 +132,8 @@ export const KITCHEN_SOURCES: KitchenSourceTemplate[] = [
   },
   {
     id: "trash_bin",
-    name: "Trash & Recycling Bin",
-    hotspot: { x: 64, y: 78, width: 10, height: 14 },
+    name: "Recycling Nook",
+    hotspot: { x: 56.5, y: 41.2, width: 21.5, height: 36.7 },
     revealCount: { min: 2, max: 4 },
     revealPool: [
       { templateId: "iron_skillet", weight: 8 },

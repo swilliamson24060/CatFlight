@@ -1,7 +1,7 @@
 import type { RunContext } from "../engine/runContext";
 import { CATEGORY_LABELS } from "../render/categoryColors";
 import { ITEM_GLYPHS } from "../render/itemGlyphs";
-import { composeKitchenBackgroundSvg } from "../render/kitchenShapes";
+import { composeKitchenBackground } from "../render/kitchenShapes";
 import {
   canPlace,
   clearInstance,
@@ -146,7 +146,7 @@ export function renderKitchen(
         <p class="blueprint-header">Doc's blueprint calls for: ${blueprintHtml}</p>
 
         <div class="kitchen-scene">
-          ${composeKitchenBackgroundSvg()}
+          ${composeKitchenBackground()}
           ${hotspotsHtml}
         </div>
         ${revealPanelHtml}
