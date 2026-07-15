@@ -127,18 +127,16 @@ export function renderKitchen(
         const label = occupant
           ? `${occupant.template.name}, row ${row + 1} column ${col + 1}`
           : `Empty cell, row ${row + 1} column ${col + 1}`;
-        return `<button type="button" class="cell${occupant ? " filled" : ""}" data-row="${row}" data-col="${col}" aria-label="${label}"></button>`;
+        return `<button type="button" class="cell${occupant ? " filled" : ""}" data-row="${row}" data-col="${col}" style="grid-column: ${col + 1}; grid-row: ${row + 1};" aria-label="${label}"></button>`;
       }).join("")
     ).join("");
 
     const shapesHtml = placedItems
       .map((item) => {
-        const left = (item.origin.col / gridSize) * 100;
-        const top = (item.origin.row / gridSize) * 100;
-        const width = (item.footprint.width / gridSize) * 100;
-        const height = (item.footprint.height / gridSize) * 100;
         const glyph = ITEM_GLYPHS[item.template.id] ?? "";
-        return `<div class="placed-item-shape" style="left:${left}%; top:${top}%; width:${width}%; height:${height}%; background:#8a8a8a; border-color:#666;">${glyph}</div>`;
+        const colStart = item.origin.col + 1;
+        const rowStart = item.origin.row + 1;
+        return `<button type="button" class="placed-item-shape" data-instance="${item.instanceId}" style="grid-column: ${colStart} / span ${item.footprint.width}; grid-row: ${rowStart} / span ${item.footprint.height};" aria-label="${item.template.name}, pick back up">${glyph}</button>`;
       })
       .join("");
 
@@ -160,7 +158,7 @@ export function renderKitchen(
               ${message ? `<p class="message">${message}</p>` : ""}
             </div>
             <div class="kitchen-modal-right">
-              <div class="grid" style="grid-template-columns: repeat(${gridSize}, 1fr);">${gridHtml}${shapesHtml}</div>
+              <div class="grid" style="grid-template-columns: repeat(${gridSize}, 1fr); grid-template-rows: repeat(${gridSize}, 1fr);">${gridHtml}${shapesHtml}</div>
             </div>
           </div>
         </div>
@@ -280,34 +278,35 @@ export function renderKitchen(
 
     root.querySelectorAll<HTMLButtonElement>(".cell").forEach((cell) => {
       cell.addEventListener("click", () => {
+        if (!held) return;
         const row = Number(cell.dataset.row);
         const col = Number(cell.dataset.col);
-        const occupantId = occupancy[row]![col];
-
-        if (held) {
-          if (occupantId) return;
-          const origin = { row, col };
-          if (!canPlace(occupancy, held.footprint, origin)) {
-            message = "Doesn't fit there.";
-            draw();
-            return;
-          }
-          markOccupied(occupancy, held.footprint, origin, held.instanceId);
-          placedItems.push({
-            instanceId: held.instanceId,
-            template: held.template,
-            color: held.color,
-            footprint: held.footprint,
-            origin,
-          });
-          held = null;
-          message = null;
+        if (occupancy[row]![col]) return;
+        const origin = { row, col };
+        if (!canPlace(occupancy, held.footprint, origin)) {
+          message = "Doesn't fit there.";
           draw();
           return;
         }
+        markOccupied(occupancy, held.footprint, origin, held.instanceId);
+        placedItems.push({
+          instanceId: held.instanceId,
+          template: held.template,
+          color: held.color,
+          footprint: held.footprint,
+          origin,
+        });
+        held = null;
+        message = null;
+        draw();
+      });
+    });
 
-        if (!occupantId) return;
-        const placedIdx = placedItems.findIndex((p) => p.instanceId === occupantId);
+    root.querySelectorAll<HTMLButtonElement>(".placed-item-shape").forEach((shape) => {
+      shape.addEventListener("click", () => {
+        if (held) return;
+        const instanceId = shape.dataset.instance!;
+        const placedIdx = placedItems.findIndex((p) => p.instanceId === instanceId);
         if (placedIdx === -1) return;
         const placed = placedItems[placedIdx]!;
         clearInstance(occupancy, placed.instanceId);
