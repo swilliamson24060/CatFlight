@@ -1,6 +1,6 @@
 import type { Footprint } from "../types/core";
 
-export const DEFAULT_GRID_SIZE = 5;
+export const DEFAULT_GRID_SIZE = 4;
 
 /** instanceId occupying each cell, or null if empty. */
 export type Occupancy = (string | null)[][];

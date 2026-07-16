@@ -22,7 +22,7 @@ function outcomeWith(gatesCleared: number): FlightOutcome {
 describe("computeGridSize", () => {
   it("scales with gridExpansionLevel", () => {
     const meta = { ...createDefaultMetaState(), gridExpansionLevel: 2 };
-    expect(computeGridSize(meta)).toBe(7);
+    expect(computeGridSize(meta)).toBe(6);
   });
 });
 
