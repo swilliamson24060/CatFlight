@@ -1,7 +1,13 @@
 import { playLandingMiss, playLaunchFail, playMidflightFail, playSuccess } from "../audio/sfx";
 import type { RunContext } from "../engine/runContext";
 import { composeCraftCardSvg } from "../render/craftCard";
-import { composeCraftSvg, craftRecordToVisual } from "../render/craftComposer";
+import {
+  composeCraftLeanSvg,
+  composeHarnessCloseupSvg,
+  composePowerSourceCloseupSvg,
+  composeWingsCloseupSvg,
+  craftRecordToVisual,
+} from "../render/craftComposer";
 import { downloadDataUrl, svgToPngDataUrl } from "../render/exportImage";
 import { evaluateFlight, type FlightGate, type FlightOutcome } from "../systems/flightSim";
 import { FUNCTIONAL_CATEGORIES } from "../types/core";
@@ -49,20 +55,6 @@ function gateStatusHtml(outcome: FlightOutcome): string {
   }).join(" &middot; ");
 }
 
-function animationClassFor(outcome: FlightOutcome): string {
-  if (outcome.success) return "anim-success";
-  switch (outcome.failedAt) {
-    case "launch":
-      return "anim-launch-fail";
-    case "midflight":
-      return "anim-midflight-fail";
-    case "landing":
-      return outcome.landingMissReason === "overshoot" ? "anim-landing-overshoot" : "anim-landing-undershoot";
-    default:
-      return "";
-  }
-}
-
 function playOutcomeSound(outcome: FlightOutcome): void {
   if (outcome.success) playSuccess();
   else if (outcome.failedAt === "launch") playLaunchFail();
@@ -70,25 +62,95 @@ function playOutcomeSound(outcome: FlightOutcome): void {
   else if (outcome.failedAt === "landing") playLandingMiss();
 }
 
-type Phase = "idle" | "animating" | "revealed";
+type RevealPhase = "reveal-harness" | "reveal-power" | "reveal-wings";
+type Phase = RevealPhase | "idle" | "animating" | "revealed";
+
+const REVEAL_CAPTIONS: Record<RevealPhase, string> = {
+  "reveal-harness": "Harness",
+  "reveal-power": "Power source",
+  "reveal-wings": "Wings",
+};
+
+const REVEAL_STAGE_MS = 1100;
+
+/** Only spotlights parts that were actually collected -- skips straight past an empty category. */
+function buildRevealSequence(craft: CraftRecord): RevealPhase[] {
+  const sequence: RevealPhase[] = [];
+  if (craft.categories.harness.hero) sequence.push("reveal-harness");
+  if (craft.categories.powerSource.hero) sequence.push("reveal-power");
+  sequence.push("reveal-wings");
+  return sequence;
+}
+
+function isRevealPhase(phase: Phase): phase is RevealPhase {
+  return phase === "reveal-harness" || phase === "reveal-power" || phase === "reveal-wings";
+}
 
 export function renderFlightSim(root: HTMLElement, context: RunContext, onAdvance: (outcome: FlightOutcome) => void): void {
   const craft = context.craft;
+  const visual = craft ? craftRecordToVisual(craft) : null;
+  const revealSequence = craft ? buildRevealSequence(craft) : [];
+  let revealIndex = 0;
+  let phase: Phase = revealSequence.length > 0 ? revealSequence[0]! : "idle";
   let outcome: FlightOutcome | null = null;
-  let phase: Phase = "idle";
   let shareMessage: { text: string; ok: boolean } | null = null;
+  let revealTimer: number | undefined;
+
+  function clearRevealTimer(): void {
+    if (revealTimer !== undefined) {
+      window.clearTimeout(revealTimer);
+      revealTimer = undefined;
+    }
+  }
+
+  function advanceReveal(): void {
+    revealIndex++;
+    phase = revealIndex < revealSequence.length ? revealSequence[revealIndex]! : "idle";
+    draw();
+  }
+
+  function skipReveal(): void {
+    clearRevealTimer();
+    phase = "idle";
+    draw();
+  }
 
   function draw(): void {
-    const animClass = outcome && phase !== "idle" ? animationClassFor(outcome) : "";
-    const craftHtml = craft
-      ? `<div class="craft-preview">
-           <div class="flight-stage"><div class="flight-craft ${animClass}">${composeCraftSvg(craftRecordToVisual(craft))}</div></div>
-         </div>`
-      : `<p><em>No craft assembled.</em></p>`;
+    if (!root.isConnected) return;
 
-    const thresholdsHtml = craft
-      ? `<p>Blueprint fulfillment: ${Math.round(craft.fulfillmentRatio * 100)}% — that's your odds of a clean flight.</p>`
-      : "";
+    let craftHtml: string;
+    if (!craft || !visual) {
+      craftHtml = `<p><em>No craft assembled.</em></p>`;
+    } else if (isRevealPhase(phase)) {
+      const closeup =
+        phase === "reveal-harness"
+          ? composeHarnessCloseupSvg(visual)
+          : phase === "reveal-power"
+            ? composePowerSourceCloseupSvg(visual)
+            : composeWingsCloseupSvg(visual);
+      craftHtml = `
+        <div class="craft-preview reveal-shot">
+          <div class="reveal-caption">${REVEAL_CAPTIONS[phase]}</div>
+          ${closeup ?? ""}
+        </div>
+      `;
+    } else {
+      const fogTint = outcome ? (outcome.success ? "fog-success" : "fog-fail") : "";
+      const fogState = phase === "animating" ? "animating" : phase === "revealed" ? "settled" : "";
+      craftHtml = `
+        <div class="craft-preview">
+          <div class="flight-stage">
+            <div class="flight-craft">${composeCraftLeanSvg(visual)}</div>
+            <div class="flight-fog ${fogTint} ${fogState}"></div>
+          </div>
+        </div>
+      `;
+    }
+
+    const thresholdsHtml =
+      craft && !isRevealPhase(phase)
+        ? `<p>Blueprint fulfillment: ${Math.round(craft.fulfillmentRatio * 100)}% — that's your odds of a clean flight.</p>`
+        : "";
 
     const missingCategoryWarningHtml =
       craft && phase === "idle" && !hasAllCategories(craft)
@@ -96,7 +158,9 @@ export function renderFlightSim(root: HTMLElement, context: RunContext, onAdvanc
         : "";
 
     let actionHtml = "";
-    if (phase === "idle") {
+    if (isRevealPhase(phase)) {
+      actionHtml = `<button id="skip-reveal-btn" class="skip-reveal-btn">Skip &rsaquo;</button>`;
+    } else if (phase === "idle") {
       actionHtml = `<button id="launch-btn">Launch!</button>`;
     } else if (phase === "animating") {
       actionHtml = `<p class="flying-status"><em>Flying&hellip;</em></p>`;
@@ -130,9 +194,14 @@ export function renderFlightSim(root: HTMLElement, context: RunContext, onAdvanc
 
     wireEvents();
 
+    if (isRevealPhase(phase)) {
+      clearRevealTimer();
+      revealTimer = window.setTimeout(advanceReveal, REVEAL_STAGE_MS);
+    }
+
     if (phase === "animating") {
-      const craftEl = root.querySelector<HTMLElement>(".flight-craft");
-      craftEl?.addEventListener(
+      const fogEl = root.querySelector<HTMLElement>(".flight-fog");
+      fogEl?.addEventListener(
         "animationend",
         () => {
           phase = "revealed";
@@ -145,6 +214,8 @@ export function renderFlightSim(root: HTMLElement, context: RunContext, onAdvanc
   }
 
   function wireEvents(): void {
+    root.querySelector<HTMLButtonElement>("#skip-reveal-btn")?.addEventListener("click", skipReveal);
+
     root.querySelector<HTMLButtonElement>("#launch-btn")?.addEventListener("click", () => {
       if (!craft) return;
       outcome = evaluateFlight(craft.fulfillmentRatio, hasAllCategories(craft));

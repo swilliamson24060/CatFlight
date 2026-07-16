@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   composeCraftFragment,
+  composeCraftLeanSvg,
+  composeHarnessCloseupSvg,
+  composePowerSourceCloseupSvg,
+  composeWingsCloseupSvg,
   HARNESS_ART_POOL,
   LEFT_WING_POOL,
   pickHarnessArt,
@@ -14,6 +18,16 @@ function baseCraftVisual(): CraftVisual {
     categories: {},
     decorations: [],
     wingArt: { left: "wing-left-1.png", right: "wing-right-1.png" },
+  };
+}
+
+function craftVisualWithWings(): CraftVisual {
+  return {
+    ...baseCraftVisual(),
+    categories: {
+      wingMembrane: { archetype: "cardboard", templateId: "cardboard_scrap", color: { hue: 0, brilliance: 0.5 } },
+      wingFlapper: { archetype: "glider", templateId: "broom_handle", color: { hue: 0, brilliance: 0.5 } },
+    },
   };
 }
 
@@ -136,5 +150,56 @@ describe("composeCraftFragment", () => {
       },
     };
     expect(composeCraftFragment(craft)).toContain("harness/");
+  });
+});
+
+describe("composeCraftLeanSvg", () => {
+  it("never renders harness or power source art, even when both are present", () => {
+    const craft: CraftVisual = {
+      ...baseCraftVisual(),
+      harnessArt: pickHarnessArt(0.5)!.file,
+      categories: {
+        harness: { archetype: "shoelaceLoop", templateId: "shoelace", color: { hue: 0, brilliance: 0.5 } },
+        powerSource: { archetype: "rubberBandSling", templateId: "rubber_band", color: { hue: 0, brilliance: 0.5 } },
+      },
+    };
+    const svg = composeCraftLeanSvg(craft);
+    expect(svg).not.toContain("harness/");
+    expect(svg).not.toContain("pieces/power-source/");
+  });
+
+  it("still renders the wings and cat body", () => {
+    const svg = composeCraftLeanSvg(craftVisualWithWings());
+    expect(svg).toContain("wings/wing-left-1.png");
+    expect(svg).toContain("wings/wing-right-1.png");
+    expect(svg).toContain("pieces/cat-body-back.png");
+  });
+});
+
+describe("close-up shots for the reveal sequence", () => {
+  it("composeHarnessCloseupSvg is undefined without a harness component, defined with one", () => {
+    expect(composeHarnessCloseupSvg(baseCraftVisual())).toBeUndefined();
+    const withHarness: CraftVisual = {
+      ...baseCraftVisual(),
+      harnessArt: "harness-2.png",
+      categories: { harness: { archetype: "shoelaceLoop", templateId: "shoelace", color: { hue: 0, brilliance: 0.5 } } },
+    };
+    expect(composeHarnessCloseupSvg(withHarness)).toContain("harness/harness-2.png");
+  });
+
+  it("composePowerSourceCloseupSvg is undefined without a powerSource component, defined with one", () => {
+    expect(composePowerSourceCloseupSvg(baseCraftVisual())).toBeUndefined();
+    const withPower: CraftVisual = {
+      ...baseCraftVisual(),
+      categories: { powerSource: { archetype: "rubberBandSling", templateId: "rubber_band", color: { hue: 0, brilliance: 0.5 } } },
+    };
+    expect(composePowerSourceCloseupSvg(withPower)).toContain("pieces/power-source/power-rubber-band.png");
+  });
+
+  it("composeWingsCloseupSvg always renders both wing images and nothing else", () => {
+    const svg = composeWingsCloseupSvg(craftVisualWithWings());
+    expect(svg).toContain("wings/wing-left-1.png");
+    expect(svg).toContain("wings/wing-right-1.png");
+    expect(svg).not.toContain("pieces/cat-body-back.png");
   });
 });

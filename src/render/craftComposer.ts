@@ -290,3 +290,56 @@ export function composeCraftSvg(craft: CraftVisual): string {
     </svg>
   `;
 }
+
+/**
+ * Wings + cat body only -- no harness/power source icons. Used for the Flight Sim screen's
+ * persistent view, once the reveal sequence (see compose*CloseupSvg below) has already given
+ * harness and power source their own spotlight moment.
+ */
+function composeCraftLeanFragment(craft: CraftVisual): string {
+  const left = wingImageMarkup("left", craft.wingArt.left, craft.categories.wingMembrane);
+  const right = wingImageMarkup("right", craft.wingArt.right, craft.categories.wingFlapper);
+
+  return `
+    <defs>${left.defs}${right.defs}</defs>
+    ${catBodyMarkup()}
+    ${left.body}
+    ${right.body}
+    ${decorationMarkup(craft.decorations)}
+    ${rarityBadgeMarkup(craft)}
+  `;
+}
+
+export function composeCraftLeanSvg(craft: CraftVisual): string {
+  return `<svg viewBox="0 0 240 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Wings mounted on Meow-gor's back">${composeCraftLeanFragment(craft)}</svg>`;
+}
+
+function paddedViewBox(box: { x: number; y: number; width: number; height: number }, pad: number): string {
+  return `${box.x - pad} ${box.y - pad} ${box.width + pad * 2} ${box.height + pad * 2}`;
+}
+
+const CLOSEUP_PADDING = 14;
+
+/** Tight close-up shots for the pre-flight reveal sequence -- each spotlights one collected part
+ * before the persistent lean view (wings + body) takes over. Undefined when that part wasn't
+ * collected this trip, so the caller can skip straight past it. */
+export function composeHarnessCloseupSvg(craft: CraftVisual): string | undefined {
+  if (!craft.categories.harness) return undefined;
+  const harness = harnessMarkup(craft.categories.harness, craft.harnessArt);
+  const viewBox = paddedViewBox(ACCENT_LAYOUT.harness, CLOSEUP_PADDING);
+  return `<svg viewBox="${viewBox}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Harness close-up"><defs>${harness.defs}</defs>${harness.body}</svg>`;
+}
+
+export function composePowerSourceCloseupSvg(craft: CraftVisual): string | undefined {
+  if (!craft.categories.powerSource) return undefined;
+  const powerSource = powerSourceMarkup(craft.categories.powerSource);
+  const viewBox = paddedViewBox(ACCENT_LAYOUT.powerSource, CLOSEUP_PADDING);
+  return `<svg viewBox="${viewBox}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Power source close-up"><defs>${powerSource.defs}</defs>${powerSource.body}</svg>`;
+}
+
+/** Both wings, floating without the cat body -- the "before" shot to the lean view's "after". */
+export function composeWingsCloseupSvg(craft: CraftVisual): string {
+  const left = wingImageMarkup("left", craft.wingArt.left, craft.categories.wingMembrane);
+  const right = wingImageMarkup("right", craft.wingArt.right, craft.categories.wingFlapper);
+  return `<svg viewBox="4 2 232 162" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Wings close-up"><defs>${left.defs}${right.defs}</defs>${left.body}${right.body}</svg>`;
+}
