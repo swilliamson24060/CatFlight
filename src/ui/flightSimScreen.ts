@@ -4,6 +4,12 @@ import { composeCraftCardSvg } from "../render/craftCard";
 import { composeCraftSvg, craftRecordToVisual } from "../render/craftComposer";
 import { downloadDataUrl, svgToPngDataUrl } from "../render/exportImage";
 import { evaluateFlight, type FlightGate, type FlightOutcome } from "../systems/flightSim";
+import { FUNCTIONAL_CATEGORIES } from "../types/core";
+import type { CraftRecord } from "../types/craft";
+
+function hasAllCategories(craft: CraftRecord): boolean {
+  return FUNCTIONAL_CATEGORIES.every((category) => craft.categories[category].components.length > 0);
+}
 
 const GATE_LABELS: Record<FlightGate, string> = {
   launch: "Launch",
@@ -16,6 +22,9 @@ const GATE_ORDER: FlightGate[] = ["launch", "midflight", "landing"];
 function flavorText(outcome: FlightOutcome): string {
   if (outcome.success) {
     return "Meow-gor touches down gracefully next to the food dish. Doc Frankie pops a tiny bottle of sparkling apple juice. Level Complete!";
+  }
+  if (outcome.missingCategory) {
+    return "Doc won't even bolt this together — a whole category of parts is missing entirely. The engine sputters and stalls before Meow-gor leaves the floor.";
   }
   switch (outcome.failedAt) {
     case "launch":
@@ -81,6 +90,11 @@ export function renderFlightSim(root: HTMLElement, context: RunContext, onAdvanc
       ? `<p>Blueprint fulfillment: ${Math.round(craft.fulfillmentRatio * 100)}% — that's your odds of a clean flight.</p>`
       : "";
 
+    const missingCategoryWarningHtml =
+      craft && phase === "idle" && !hasAllCategories(craft)
+        ? `<p class="message">Missing at least one category entirely -- Doc won't even attempt the flight until every category has something.</p>`
+        : "";
+
     let actionHtml = "";
     if (phase === "idle") {
       actionHtml = `<button id="launch-btn">Launch!</button>`;
@@ -109,6 +123,7 @@ export function renderFlightSim(root: HTMLElement, context: RunContext, onAdvanc
         <h1>Phase 3: Test Flight Simulation</h1>
         ${craftHtml}
         ${thresholdsHtml}
+        ${missingCategoryWarningHtml}
         ${actionHtml}
       </div>
     `;
@@ -132,7 +147,7 @@ export function renderFlightSim(root: HTMLElement, context: RunContext, onAdvanc
   function wireEvents(): void {
     root.querySelector<HTMLButtonElement>("#launch-btn")?.addEventListener("click", () => {
       if (!craft) return;
-      outcome = evaluateFlight(craft.fulfillmentRatio);
+      outcome = evaluateFlight(craft.fulfillmentRatio, hasAllCategories(craft));
       phase = "animating";
       draw();
     });

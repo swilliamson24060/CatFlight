@@ -16,7 +16,14 @@ import type { FlightOutcome } from "./flightSim";
 import type { PlacedGridItem } from "../types/grid";
 
 function outcomeWith(gatesCleared: number): FlightOutcome {
-  return { success: gatesCleared === 3, gatesCleared, failedAt: null, landingMissReason: null, fulfillmentRatio: 1 };
+  return {
+    success: gatesCleared === 3,
+    gatesCleared,
+    failedAt: null,
+    landingMissReason: null,
+    fulfillmentRatio: 1,
+    missingCategory: false,
+  };
 }
 
 describe("computeGridSize", () => {

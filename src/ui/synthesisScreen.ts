@@ -90,8 +90,15 @@ export function renderSynthesis(
       return `<div class="bin"><h3>${CATEGORY_LABELS[category]}${quotaLabel}</h3>${committedHtml}${candidateHtml}${emptyHtml}</div>`;
     }).join("");
 
-    const fulfillmentPct = Math.round(computeFulfillmentRatio(mergedSelections(), effectiveRequirements) * 100);
+    const merged = mergedSelections();
+    const fulfillmentPct = Math.round(computeFulfillmentRatio(merged, effectiveRequirements) * 100);
     const fulfillmentHtml = `<p>Blueprint fulfillment: ${fulfillmentPct}% — the closer to 100%, the better your flight odds.</p>`;
+
+    const emptyCategories = FUNCTIONAL_CATEGORIES.filter((category) => (merged[category]?.length ?? 0) === 0);
+    const missingWarningHtml =
+      emptyCategories.length > 0
+        ? `<p class="message">Missing entirely: ${emptyCategories.map((category) => CATEGORY_LABELS[category]).join(", ")} — every category needs at least 1 piece, or the flight is an automatic fail no matter what else you've got.</p>`
+        : "";
 
     root.innerHTML = `
       <div class="phase-shell">
@@ -100,6 +107,7 @@ export function renderSynthesis(
         <h1>Phase 2: Doc's Workbench</h1>
         <div class="bins">${binHtml}</div>
         ${fulfillmentHtml}
+        ${missingWarningHtml}
         <button id="advance-btn">Assemble Craft → Flight Sim</button>
         <button id="return-to-kitchen-btn" class="secondary-btn">Not close yet? Return to Kitchen</button>
       </div>
