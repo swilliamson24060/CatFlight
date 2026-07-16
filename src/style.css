@@ -370,6 +370,20 @@ th {
   font-size: 1.2rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
   cursor: pointer;
+  position: relative;
+}
+
+.grid .placed-item-shape.locked {
+  cursor: not-allowed;
+  filter: saturate(0.6) brightness(0.9);
+}
+
+.lock-badge {
+  position: absolute;
+  bottom: 1px;
+  right: 2px;
+  font-size: 0.6rem;
+  line-height: 1;
 }
 
 .craft-preview {

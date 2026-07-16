@@ -2,6 +2,7 @@ import { generateBlueprint } from "../data/blueprint";
 import { generateDifficultyTier } from "../data/difficulty";
 import type { Blueprint, DifficultyTier } from "../types/content";
 import type { CraftRecord } from "../types/craft";
+import type { PieceCategory } from "../types/core";
 import type { GridResult, PlacedGridItem } from "../types/grid";
 import type { FlightOutcome } from "../systems/flightSim";
 
@@ -18,6 +19,9 @@ export interface RunContext {
   excessPieces?: PlacedGridItem[];
   craft?: CraftRecord;
   lastFlightOutcome?: FlightOutcome;
+  /** Doc's Workbench category assignments, kept so a trip back to the kitchen doesn't lose them.
+   * Pieces referenced here are locked in the grid -- committed to a category, not removable. */
+  categorySelections?: Partial<Record<PieceCategory, string[]>>;
 }
 
 export function createInitialRunContext(): RunContext {

@@ -1,16 +1,13 @@
 import { playAssemble } from "../audio/sfx";
 import type { RunContext } from "../engine/runContext";
 import { CATEGORY_LABELS } from "../render/categoryColors";
-import { composeCraftSvg } from "../render/craftComposer";
 import { composeWorkshopBackground } from "../render/kitchenShapes";
 import { computeBlueprintEase, computeYieldBoost, type MetaState } from "../systems/metaProgression";
 import {
   assembleCraft,
-  chooseHero,
   computeFulfillmentRatio,
   groupCandidatesByCategory,
   identifyExcessPieces,
-  resolveComponent,
   type CategorySelections,
 } from "../systems/synthesis";
 import { ALL_CATEGORIES, FUNCTIONAL_CATEGORIES } from "../types/core";
@@ -18,12 +15,14 @@ import type { FunctionalPieceCategory, PieceCategory } from "../types/core";
 import type { CraftRecord } from "../types/craft";
 import type { PlacedGridItem } from "../types/grid";
 
+export type CategoryAssignments = Partial<Record<PieceCategory, string[]>>;
+
 export function renderSynthesis(
   root: HTMLElement,
   context: RunContext,
   meta: MetaState,
-  onAdvance: (craft: CraftRecord, excessPieces: PlacedGridItem[]) => void,
-  onReturnToKitchen: () => void
+  onAdvance: (craft: CraftRecord, excessPieces: PlacedGridItem[], selections: CategoryAssignments) => void,
+  onReturnToKitchen: (selections: CategoryAssignments) => void
 ): void {
   const placedItems = context.lastGridResult?.placedItems ?? [];
   const candidates = groupCandidatesByCategory(placedItems);
@@ -38,7 +37,12 @@ export function renderSynthesis(
     FUNCTIONAL_CATEGORIES.map((cat) => [cat, effectiveRequirement(cat)])
   ) as Record<FunctionalPieceCategory, number>;
 
-  const selected: Partial<Record<PieceCategory, string[]>> = {};
+  const selected: CategoryAssignments = {};
+  for (const category of ALL_CATEGORIES) {
+    const prior = context.categorySelections?.[category] ?? [];
+    const stillPresent = prior.filter((id) => candidates[category].some((item) => item.instanceId === id));
+    if (stillPresent.length > 0) selected[category] = stillPresent;
+  }
 
   function quotaFor(category: PieceCategory): number | null {
     return category === "decoration" ? null : effectiveRequirement(category as FunctionalPieceCategory);
@@ -86,29 +90,6 @@ export function renderSynthesis(
     }).join("");
 
     const selections = getSelections();
-    const previewCategories: Record<string, { archetype: string; color: PlacedGridItem["color"] }> = {};
-    let hasAnyFunctional = false;
-    for (const category of FUNCTIONAL_CATEGORIES) {
-      const items = selections[category] ?? [];
-      if (items.length === 0) continue;
-      const hero = chooseHero(items.map(resolveComponent));
-      if (hero) {
-        previewCategories[category] = { archetype: hero.archetype, color: hero.color };
-        hasAnyFunctional = true;
-      }
-    }
-    const decorations = selections.decoration ?? [];
-
-    let previewHtml = `<p><em>Select pieces to fill each category and preview the craft.</em></p>`;
-    if (hasAnyFunctional) {
-      const svg = composeCraftSvg({
-        categories: previewCategories,
-        decorationCount: decorations.length,
-        decorationFlyBetter: decorations.some((item) => item.template.flyBetter),
-      });
-      previewHtml = `<div class="craft-preview">${svg}</div>`;
-    }
-
     const fulfillmentPct = Math.round(computeFulfillmentRatio(selections, effectiveRequirements) * 100);
     const fulfillmentHtml = `<p>Blueprint fulfillment: ${fulfillmentPct}% — the closer to 100%, the better your flight odds.</p>`;
 
@@ -118,7 +99,6 @@ export function renderSynthesis(
         <p class="phase-label">Run ${context.runNumber} · Tier ${context.tier} · Trip ${context.tripCount + 1}</p>
         <h1>Phase 2: Doc's Workbench</h1>
         <div class="bins">${binHtml}</div>
-        ${previewHtml}
         ${fulfillmentHtml}
         <button id="advance-btn">Assemble Craft → Flight Sim</button>
         <button id="return-to-kitchen-btn" class="secondary-btn">Not close yet? Return to Kitchen</button>
@@ -150,11 +130,11 @@ export function renderSynthesis(
       const craft = assembleCraft(selections, effectiveRequirements, context.tripCount + 1, yieldBoost);
       const excessPieces = identifyExcessPieces(placedItems, selections);
       playAssemble();
-      onAdvance(craft, excessPieces);
+      onAdvance(craft, excessPieces, selected);
     });
 
     root.querySelector<HTMLButtonElement>("#return-to-kitchen-btn")!.addEventListener("click", () => {
-      onReturnToKitchen();
+      onReturnToKitchen(selected);
     });
   }
 

@@ -33,13 +33,14 @@ export function mountApp(root: HTMLElement): void {
           root,
           context,
           meta,
-          (craft, excessPieces) => {
-            context = { ...context, craft, excessPieces };
+          (craft, excessPieces, selections) => {
+            context = { ...context, craft, excessPieces, categorySelections: selections };
             machine.advance();
           },
-          () => {
+          (selections) => {
             // Player isn't happy with the haul yet -- back to the kitchen for another trip,
-            // no flight attempt spent.
+            // no flight attempt spent. Selections persist so committed pieces stay locked in.
+            context = { ...context, categorySelections: selections };
             machine.setPhase("scavenge");
           }
         );
