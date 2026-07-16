@@ -24,11 +24,17 @@ import type { GridResult, PlacedGridItem } from "../types/grid";
 
 const OPENS_PER_TRIP = 3;
 
+/** Where a held piece came from, so cancelling puts it back where it came from. */
+type HeldOrigin =
+  | { kind: "reveal"; sourceId: string }
+  | { kind: "grid"; position: { row: number; col: number }; footprint: Footprint };
+
 interface HeldItem {
   instanceId: string;
   template: PieceTemplate;
   color: PlacedGridItem["color"];
   footprint: Footprint;
+  origin: HeldOrigin;
 }
 
 export function renderKitchen(
@@ -49,7 +55,6 @@ export function renderKitchen(
   // Every trip starts with a blank grid -- pieces from a prior trip either got committed to a
   // category at Doc's Workbench (and are counted there, see context.committedComponents) or were
   // left behind for good.
-  const pendingTray: KitchenPiece[] = [];
   const occupancy: Occupancy = createEmptyOccupancy(gridSize);
   const placedItems: PlacedGridItem[] = [];
 
@@ -62,11 +67,29 @@ export function renderKitchen(
 
   if (showBriefing) setMusicTrack("lab");
 
-  function closeModal(): void {
-    if (held) {
-      pendingTray.push({ instanceId: held.instanceId, template: held.template, color: held.color });
-      held = null;
+  /** Puts the held piece back where it came from -- the reveal list it was picked up from, or its
+   * original grid cell -- rather than dropping it. */
+  function releaseHeld(): void {
+    if (!held) return;
+    if (held.origin.kind === "reveal") {
+      const remaining = pendingReveals.get(held.origin.sourceId) ?? [];
+      remaining.push({ instanceId: held.instanceId, template: held.template, color: held.color });
+    } else {
+      const { position, footprint } = held.origin;
+      markOccupied(occupancy, footprint, position, held.instanceId);
+      placedItems.push({
+        instanceId: held.instanceId,
+        template: held.template,
+        color: held.color,
+        footprint,
+        origin: position,
+      });
     }
+    held = null;
+  }
+
+  function closeModal(): void {
+    releaseHeld();
     openSourceId = null;
     gridModalOpen = false;
     message = null;
@@ -96,10 +119,11 @@ export function renderKitchen(
               ? remaining
                   .map((piece) => {
                     const glyph = ITEM_GLYPHS[piece.template.id] ?? "";
+                    const disabled = held ? "disabled" : "";
                     return `
                       <div class="reveal-item">
                         <span>${glyph} ${piece.template.name} [${piece.template.footprint.width}x${piece.template.footprint.height}]</span>
-                        <button type="button" class="keep-btn" data-instance="${piece.instanceId}">Keep</button>
+                        <button type="button" class="keep-btn" data-instance="${piece.instanceId}" ${disabled}>Pick Up</button>
                         <button type="button" class="discard-btn" data-instance="${piece.instanceId}">Discard</button>
                       </div>
                     `;
@@ -109,17 +133,6 @@ export function renderKitchen(
           return `<div class="reveal-panel">${itemsHtml}</div>`;
         })()
       : "";
-
-    const trayHtml =
-      pendingTray.length > 0
-        ? pendingTray
-            .map((piece) => {
-              const glyph = ITEM_GLYPHS[piece.template.id] ?? "";
-              const disabled = held ? "disabled" : "";
-              return `<button type="button" class="tray-item" data-instance="${piece.instanceId}" ${disabled}>${glyph} ${piece.template.name} [${piece.template.footprint.width}x${piece.template.footprint.height}]</button>`;
-            })
-            .join("")
-        : "<em>Tray empty.</em>";
 
     const gridHtml = Array.from({ length: gridSize }, (_, row) =>
       Array.from({ length: gridSize }, (_, col) => {
@@ -142,8 +155,8 @@ export function renderKitchen(
       .join("");
 
     const heldHtml = held
-      ? `<p>Holding: ${ITEM_GLYPHS[held.template.id] ?? ""} <strong>${held.template.name}</strong> (${held.footprint.width}x${held.footprint.height}) <button id="rotate-btn">Rotate</button> <button id="cancel-btn">Put back in tray</button> <button id="discard-held-btn">Discard</button></p>`
-      : `<p>Nothing held — click a tray item to pick it up.</p>`;
+      ? `<p>Holding: ${ITEM_GLYPHS[held.template.id] ?? ""} <strong>${held.template.name}</strong> (${held.footprint.width}x${held.footprint.height}) <button id="rotate-btn">Rotate</button> <button id="cancel-btn">Put back</button> <button id="discard-held-btn">Discard</button></p>`
+      : `<p>Nothing held — click Pick Up on an item to select it.</p>`;
 
     const modalHtml = modalOpen
       ? `
@@ -153,8 +166,6 @@ export function renderKitchen(
             <div class="kitchen-modal-left">
               <h3>${activeSource ? activeSource.source.name : "Your Grid"}</h3>
               ${revealListHtml}
-              <h4>Tray</h4>
-              <div class="tray">${trayHtml}</div>
               ${heldHtml}
               ${message ? `<p class="message">${message}</p>` : ""}
             </div>
@@ -246,13 +257,21 @@ export function renderKitchen(
 
     root.querySelectorAll<HTMLButtonElement>(".keep-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
-        if (!openSourceId) return;
+        if (held || !openSourceId) return;
         const instanceId = btn.dataset.instance!;
         const remaining = pendingReveals.get(openSourceId) ?? [];
         const idx = remaining.findIndex((p) => p.instanceId === instanceId);
         if (idx === -1) return;
-        pendingTray.push(remaining[idx]!);
+        const piece = remaining[idx]!;
         remaining.splice(idx, 1);
+        held = {
+          instanceId: piece.instanceId,
+          template: piece.template,
+          color: piece.color,
+          footprint: { ...piece.template.footprint },
+          origin: { kind: "reveal", sourceId: openSourceId },
+        };
+        message = null;
         draw();
       });
     });
@@ -269,20 +288,6 @@ export function renderKitchen(
       });
     });
 
-    root.querySelectorAll<HTMLButtonElement>(".tray-item").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        if (held) return;
-        const instanceId = btn.dataset.instance!;
-        const idx = pendingTray.findIndex((p) => p.instanceId === instanceId);
-        if (idx === -1) return;
-        const piece = pendingTray[idx]!;
-        pendingTray.splice(idx, 1);
-        held = { instanceId: piece.instanceId, template: piece.template, color: piece.color, footprint: { ...piece.template.footprint } };
-        message = null;
-        draw();
-      });
-    });
-
     root.querySelector<HTMLButtonElement>("#rotate-btn")?.addEventListener("click", () => {
       if (!held) return;
       held.footprint = rotateFootprint(held.footprint);
@@ -291,8 +296,7 @@ export function renderKitchen(
 
     root.querySelector<HTMLButtonElement>("#cancel-btn")?.addEventListener("click", () => {
       if (!held) return;
-      pendingTray.push({ instanceId: held.instanceId, template: held.template, color: held.color });
-      held = null;
+      releaseHeld();
       message = null;
       draw();
     });
@@ -339,7 +343,13 @@ export function renderKitchen(
         const placed = placedItems[placedIdx]!;
         clearInstance(occupancy, placed.instanceId);
         placedItems.splice(placedIdx, 1);
-        held = { instanceId: placed.instanceId, template: placed.template, color: placed.color, footprint: placed.footprint };
+        held = {
+          instanceId: placed.instanceId,
+          template: placed.template,
+          color: placed.color,
+          footprint: placed.footprint,
+          origin: { kind: "grid", position: placed.origin, footprint: placed.footprint },
+        };
         message = null;
         draw();
       });
