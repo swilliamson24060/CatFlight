@@ -25,6 +25,7 @@ export const PIECE_POOL: PieceTemplate[] = [
   { id: "diet_soda", name: "Diet Soda", categories: ["powerSource"], archetype: "mentosCore", footprint: { width: 1, height: 2 }, baseStats: POWER_SOURCE_STATS.mentosCore, spawnWeight: 4 },
   { id: "fruity_gel_candy_mints", name: "Fruity Gel Candy Mints", categories: ["powerSource"], archetype: "mentosCore", footprint: { width: 1, height: 1 }, baseStats: POWER_SOURCE_STATS.mentosCore, spawnWeight: 3 },
   { id: "battery_pack", name: "Battery Pack", categories: ["powerSource"], archetype: "hairdryer", footprint: { width: 1, height: 2 }, baseStats: POWER_SOURCE_STATS.hairdryer, spawnWeight: 4 },
+  { id: "spray_can", name: "Spray Can", categories: ["powerSource"], archetype: "bakingSodaJet", footprint: { width: 1, height: 1 }, baseStats: POWER_SOURCE_STATS.bakingSodaJet, spawnWeight: 4 },
 
   // Wing Flapper
   { id: "broom_handle", name: "Broom Handle", categories: ["wingFlapper"], archetype: "glider", footprint: { width: 1, height: 4 }, baseStats: WING_FLAPPER_STATS.glider, spawnWeight: 6 },

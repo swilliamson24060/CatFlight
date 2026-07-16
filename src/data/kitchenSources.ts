@@ -126,6 +126,7 @@ export const KITCHEN_SOURCES: KitchenSourceTemplate[] = [
       { templateId: "rubber_strap_band", weight: 5 },
       { templateId: "backpack_strap", weight: 4 },
       { templateId: "bungee_cord", weight: 4 },
+      { templateId: "spray_can", weight: 4 },
       { templateId: "soggy_sponge", weight: 6 },
       { templateId: "glitter_glue_tube", weight: 4 },
     ],

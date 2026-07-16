@@ -7,6 +7,7 @@ import type { CraftRecord } from "../types/craft";
 
 export interface ComponentVisual {
   archetype: string;
+  templateId: string;
   color: ItemColor;
 }
 
@@ -19,8 +20,10 @@ export interface CraftVisual {
   /** One hero component per functional category; absent if the category ended up empty. */
   categories: Partial<Record<FunctionalPieceCategory, ComponentVisual>>;
   decorations: DecorationVisual[];
-  /** Resolved wing art filenames for this craft -- see pickWingArtPair. */
+  /** Resolved wing art filenames for this craft -- see pickWingArt. */
   wingArt: { left: string; right: string };
+  /** Resolved harness illustration for this craft, if HARNESS_ART_POOL has any entries -- see pickHarnessArt. */
+  harnessArt?: string;
 }
 
 const DECORATION_GLYPHS: Record<DecorationArchetype, string> = {
@@ -38,46 +41,129 @@ function pseudoRandom(seed: number): number {
 }
 
 export interface WingArtDef {
-  id: string;
+  /** Rarity rank: 1 is most common, higher ranks are progressively rarer. */
+  rank: number;
   file: string;
 }
 
 /**
- * Pool of available illustrated wing halves. Selection is random per craft and deliberately
- * independent of what was actually collected -- color still comes from the collected category's
- * rolled hue, but which illustration shows up is just for visual variety. To grow the variety,
- * drop a new file in public/wings/ and add an entry here; no other code changes needed.
+ * Rank 1-2 are common, each successive rank rarer, down to rank 10 landing at ~5% pick chance.
+ * To add more ranks later, just extend the pools below with rank: 11, 12, ... -- the geometric
+ * curve keeps extending automatically, no other code changes needed.
  */
-export const WING_ART_POOL: WingArtDef[] = [
-  { id: "junk", file: "wing-junk.png" },
-  { id: "gear", file: "wing-gear.png" },
-];
+const RARITY_RATIO = 0.87;
+
+function rarityWeight(rank: number): number {
+  return RARITY_RATIO ** (rank - 1);
+}
 
 /**
- * Picks two distinct entries from WING_ART_POOL for a craft's left/right wings -- distinct so the
- * pair always reads as "mismatched, cobbled together," which only gets more varied as the pool
- * grows. Deterministic for a given seed, so the same craft renders the same pair everywhere
- * (Flight Sim screen, downloadable card) instead of reshuffling on every re-render.
+ * Left and right wings are now genuinely different illustrated sets (not mirrors of one shared
+ * pool), so mismatched pairs happen automatically -- no distinctness constraint needed. Each side
+ * is drawn independently, weighted so rank 1 is most common and rank 10 is rarest (~5%).
  */
-export function pickWingArtPair(seed: number): { left: WingArtDef; right: WingArtDef } {
-  const pool = WING_ART_POOL;
-  const firstIndex = Math.floor(pseudoRandom(seed + 0.501) * pool.length);
-  const first = pool[firstIndex]!;
-  if (pool.length < 2) return { left: first, right: first };
+export const LEFT_WING_POOL: WingArtDef[] = Array.from({ length: 10 }, (_, i) => ({
+  rank: i + 1,
+  file: `wing-left-${i + 1}.png`,
+}));
 
-  let secondIndex = Math.floor(pseudoRandom(seed + 0.907) * (pool.length - 1));
-  if (secondIndex >= firstIndex) secondIndex += 1;
-  const second = pool[secondIndex]!;
+export const RIGHT_WING_POOL: WingArtDef[] = Array.from({ length: 10 }, (_, i) => ({
+  rank: i + 1,
+  file: `wing-right-${i + 1}.png`,
+}));
 
-  return pseudoRandom(seed + 1.3) < 0.5 ? { left: first, right: second } : { left: second, right: first };
+function pickWeighted(pool: WingArtDef[], roll: number): WingArtDef {
+  const totalWeight = pool.reduce((sum, entry) => sum + rarityWeight(entry.rank), 0);
+  let remaining = roll * totalWeight;
+  for (const entry of pool) {
+    remaining -= rarityWeight(entry.rank);
+    if (remaining <= 0) return entry;
+  }
+  return pool[pool.length - 1]!;
+}
+
+/**
+ * Picks independent left/right wing art for a craft. Deterministic for a given seed, so the same
+ * craft renders the same pair everywhere (Flight Sim screen, downloadable card) instead of
+ * reshuffling on every re-render.
+ */
+export function pickWingArt(seed: number): { left: WingArtDef; right: WingArtDef } {
+  const left = pickWeighted(LEFT_WING_POOL, pseudoRandom(seed + 0.501));
+  const right = pickWeighted(RIGHT_WING_POOL, pseudoRandom(seed + 0.907));
+  return { left, right };
+}
+
+export interface HarnessArtDef {
+  file: string;
+}
+
+/**
+ * Illustrated harness options -- picked uniformly at random (no rarity curve), independent of
+ * which harness item was actually collected. To add more, drop a file in public/harness/ and
+ * list it here; no other code changes needed.
+ */
+export const HARNESS_ART_POOL: HarnessArtDef[] = [
+  { file: "harness-1.png" },
+  { file: "harness-2.png" },
+  { file: "harness-3.png" },
+  { file: "harness-4.png" },
+];
+
+export function pickHarnessArt(seed: number): HarnessArtDef | undefined {
+  if (HARNESS_ART_POOL.length === 0) return undefined;
+  const index = Math.floor(pseudoRandom(seed + 3.701) * HARNESS_ART_POOL.length);
+  return HARNESS_ART_POOL[index];
+}
+
+/**
+ * Keyed by the specific scavenged piece's templateId (e.g. "mustard_bottle") rather than
+ * archetype, so items that share stats/archetype (mustard_bottle and baking_soda are both
+ * bakingSodaJet) can still get distinct art. templateIds with no entry keep rendering the SVG
+ * accent shape. power-soda-battery.png illustrates a fizzy soda + battery combo, standing in for
+ * every non-mustard, non-spray-can power source until each gets its own dedicated art.
+ */
+export const POWER_SOURCE_ART_MAP: Partial<Record<string, string>> = {
+  spray_can: "power-spray-can.png",
+  rubber_band: "power-rubber-band.png",
+  mustard_bottle: "power-mustard-bottle.png",
+  baking_soda: "power-soda-battery.png",
+  diet_soda: "power-soda-battery.png",
+  fruity_gel_candy_mints: "power-soda-battery.png",
+  battery_pack: "power-soda-battery.png",
+};
+
+let filterCounter = 0;
+
+/** A hue-rotated <image>, as {defs, body} so callers can pool all <filter>s into one <defs>. */
+function hueImageMarkup(
+  href: string,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  hue: number,
+  filterPrefix: string
+): { defs: string; body: string } {
+  const filterId = `${filterPrefix}-hue-${filterCounter++}`;
+  return {
+    defs: `<filter id="${filterId}"><feColorMatrix type="hueRotate" values="${hue.toFixed(1)}" /></filter>`,
+    body: `<image href="${import.meta.env.BASE_URL}${href}" x="${x}" y="${y}" width="${width}" height="${height}" preserveAspectRatio="xMidYMid meet" filter="url(#${filterId})" />`,
+  };
+}
+
+const CAT_BODY_FILE = "cat-body-back.png";
+const CAT_BODY_LAYOUT = { x: 78, y: 2, width: 84, height: 164 };
+
+/** The cat's back, mounted behind the wings so they read as attached to its shoulders. Not a
+ * collected piece, so no hue tint -- it's the mascot, not scavenged loot. */
+function catBodyMarkup(): string {
+  return `<image href="${import.meta.env.BASE_URL}pieces/${CAT_BODY_FILE}" x="${CAT_BODY_LAYOUT.x}" y="${CAT_BODY_LAYOUT.y}" width="${CAT_BODY_LAYOUT.width}" height="${CAT_BODY_LAYOUT.height}" preserveAspectRatio="xMidYMid meet" />`;
 }
 
 const WING_SLOT_X: Record<"left" | "right", number> = { left: 10, right: 148 };
 const WING_ART_WIDTH = 82;
 const WING_ART_HEIGHT = 152;
 const WING_ART_Y = 6;
-
-let filterCounter = 0;
 
 function wingImageMarkup(
   side: "left" | "right",
@@ -92,20 +178,14 @@ function wingImageMarkup(
       body: `<rect x="${x}" y="${WING_ART_Y}" width="${WING_ART_WIDTH}" height="${WING_ART_HEIGHT}" rx="8" fill="none" stroke="#999" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.4" />`,
     };
   }
-  const filterId = `wing-hue-${filterCounter++}`;
-  return {
-    defs: `<filter id="${filterId}"><feColorMatrix type="hueRotate" values="${component.color.hue.toFixed(1)}" /></filter>`,
-    body: `<image href="${import.meta.env.BASE_URL}wings/${file}" x="${x}" y="${WING_ART_Y}" width="${WING_ART_WIDTH}" height="${WING_ART_HEIGHT}" preserveAspectRatio="xMidYMid meet" filter="url(#${filterId})" />`,
-  };
+  return hueImageMarkup(`wings/${file}`, x, WING_ART_Y, WING_ART_WIDTH, WING_ART_HEIGHT, component.color.hue, "wing");
 }
 
 /** Fixed mount points for the smaller accent categories -- attached to the body/wingtips
  * rather than floating in independent boxes. */
-const ACCENT_LAYOUT: Record<Exclude<FunctionalPieceCategory, "wingFlapper" | "wingMembrane">, { x: number; y: number; width: number; height: number }> = {
-  powerSource: { x: 98, y: 134, width: 44, height: 28 },
-  aeroHelper: { x: 2, y: 2, width: 30, height: 20 },
-  attachment: { x: 208, y: 2, width: 30, height: 20 },
-  harness: { x: 2, y: 138, width: 30, height: 20 },
+const ACCENT_LAYOUT: Record<"powerSource" | "harness", { x: number; y: number; width: number; height: number }> = {
+  powerSource: { x: 90, y: 104, width: 60, height: 56 },
+  harness: { x: 2, y: 116, width: 46, height: 44 },
 };
 
 function accentMarkup(category: keyof typeof ACCENT_LAYOUT, component: ComponentVisual | undefined): string {
@@ -119,6 +199,21 @@ function accentMarkup(category: keyof typeof ACCENT_LAYOUT, component: Component
       <svg x="${x}" y="${y}" width="${width}" height="${height}" viewBox="${shape.viewBox}">${shape.markup}</svg>
     </g>
   `;
+}
+
+function powerSourceMarkup(component: ComponentVisual | undefined): { defs: string; body: string } {
+  if (!component) return { defs: "", body: "" };
+  const file = POWER_SOURCE_ART_MAP[component.templateId];
+  if (!file) return { defs: "", body: accentMarkup("powerSource", component) };
+  const { x, y, width, height } = ACCENT_LAYOUT.powerSource;
+  return hueImageMarkup(`pieces/power-source/${file}`, x, y, width, height, component.color.hue, "power-source");
+}
+
+function harnessMarkup(component: ComponentVisual | undefined, artFile: string | undefined): { defs: string; body: string } {
+  if (!component) return { defs: "", body: "" };
+  if (!artFile) return { defs: "", body: accentMarkup("harness", component) };
+  const { x, y, width, height } = ACCENT_LAYOUT.harness;
+  return hueImageMarkup(`harness/${artFile}`, x, y, width, height, component.color.hue, "harness");
 }
 
 /**
@@ -158,17 +253,16 @@ function decorationMarkup(decorations: DecorationVisual[]): string {
 export function composeCraftFragment(craft: CraftVisual): string {
   const left = wingImageMarkup("left", craft.wingArt.left, craft.categories.wingMembrane);
   const right = wingImageMarkup("right", craft.wingArt.right, craft.categories.wingFlapper);
-  const bodyMarkup = `<rect x="98" y="134" width="44" height="26" rx="8" fill="#efe9d8" stroke="#6b6b6b" stroke-width="1.5" />`;
+  const powerSource = powerSourceMarkup(craft.categories.powerSource);
+  const harness = harnessMarkup(craft.categories.harness, craft.harnessArt);
 
   return `
-    <defs>${left.defs}${right.defs}</defs>
+    <defs>${left.defs}${right.defs}${powerSource.defs}${harness.defs}</defs>
+    ${catBodyMarkup()}
     ${left.body}
     ${right.body}
-    ${bodyMarkup}
-    ${accentMarkup("powerSource", craft.categories.powerSource)}
-    ${accentMarkup("aeroHelper", craft.categories.aeroHelper)}
-    ${accentMarkup("attachment", craft.categories.attachment)}
-    ${accentMarkup("harness", craft.categories.harness)}
+    ${powerSource.body}
+    ${harness.body}
     ${decorationMarkup(craft.decorations)}
     ${rarityBadgeMarkup(craft)}
   `;
@@ -178,14 +272,15 @@ export function craftRecordToVisual(craft: CraftRecord): CraftVisual {
   const categories: CraftVisual["categories"] = {};
   for (const category of FUNCTIONAL_CATEGORIES) {
     const hero = craft.categories[category].hero;
-    if (hero) categories[category] = { archetype: hero.archetype, color: hero.color };
+    if (hero) categories[category] = { archetype: hero.archetype, templateId: hero.templateId, color: hero.color };
   }
   const decorations = craft.categories.decoration.components.map((c) => ({
     archetype: c.archetype as DecorationArchetype,
     flyBetter: c.flyBetter,
   }));
-  const pair = pickWingArtPair(craft.visualSeed);
-  return { categories, decorations, wingArt: { left: pair.left.file, right: pair.right.file } };
+  const pair = pickWingArt(craft.visualSeed);
+  const harnessArt = pickHarnessArt(craft.visualSeed)?.file;
+  return { categories, decorations, wingArt: { left: pair.left.file, right: pair.right.file }, harnessArt };
 }
 
 export function composeCraftSvg(craft: CraftVisual): string {
