@@ -26,6 +26,7 @@ export function groupCandidatesByCategory(placedItems: PlacedGridItem[]): Catego
 export function resolveComponent(item: PlacedGridItem): CraftComponent {
   return {
     archetype: item.template.archetype!,
+    templateId: item.template.id,
     color: item.color,
     stats: applyRarityBonus(item.template.baseStats, item.color),
     flyBetter: item.template.flyBetter,
@@ -89,6 +90,7 @@ export function assembleCraft(
     stats: boostedStats,
     score: computeScore(tripCount) + decorationBonus,
     fulfillmentRatio: computeFulfillmentRatio(selections, requirements),
+    visualSeed: Math.random(),
   };
   craft.seedString = craftSeedString(craft);
   return craft;

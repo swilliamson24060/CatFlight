@@ -70,6 +70,12 @@ describe("assembleCraft", () => {
     expect(craft.seedString).toBeTruthy();
   });
 
+  it("populates a visualSeed in [0, 1)", () => {
+    const craft = assembleCraft({}, REQUIREMENTS, 1);
+    expect(craft.visualSeed).toBeGreaterThanOrEqual(0);
+    expect(craft.visualSeed).toBeLessThan(1);
+  });
+
   it("computes a craft's fulfillmentRatio from its selections vs. requirements", () => {
     const membrane = makeItem("m", { categories: ["wingMembrane"], archetype: "cardboard" });
     const craft = assembleCraft({ wingMembrane: [membrane] }, REQUIREMENTS, 1);
