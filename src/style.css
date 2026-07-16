@@ -49,6 +49,17 @@ th {
   cursor: pointer;
 }
 
+.workbench-hero {
+  margin: -2rem -2rem 1.5rem;
+}
+
+.secondary-btn {
+  margin-left: 0.75rem;
+  background: #fff;
+  border: 1px solid #999;
+  color: #444;
+}
+
 .blueprint-header {
   font-size: 0.9rem;
   color: #555;

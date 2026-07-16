@@ -29,10 +29,20 @@ export function mountApp(root: HTMLElement): void {
         });
         break;
       case "synthesis":
-        renderSynthesis(root, context, meta, (craft, excessPieces) => {
-          context = { ...context, craft, excessPieces };
-          machine.advance();
-        });
+        renderSynthesis(
+          root,
+          context,
+          meta,
+          (craft, excessPieces) => {
+            context = { ...context, craft, excessPieces };
+            machine.advance();
+          },
+          () => {
+            // Player isn't happy with the haul yet -- back to the kitchen for another trip,
+            // no flight attempt spent.
+            machine.setPhase("scavenge");
+          }
+        );
         break;
       case "flightSim":
         renderFlightSim(root, context, (outcome) => {

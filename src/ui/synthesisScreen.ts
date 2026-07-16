@@ -2,6 +2,7 @@ import { playAssemble } from "../audio/sfx";
 import type { RunContext } from "../engine/runContext";
 import { CATEGORY_LABELS } from "../render/categoryColors";
 import { composeCraftSvg } from "../render/craftComposer";
+import { composeWorkshopBackground } from "../render/kitchenShapes";
 import { computeBlueprintEase, computeYieldBoost, type MetaState } from "../systems/metaProgression";
 import {
   assembleCraft,
@@ -21,7 +22,8 @@ export function renderSynthesis(
   root: HTMLElement,
   context: RunContext,
   meta: MetaState,
-  onAdvance: (craft: CraftRecord, excessPieces: PlacedGridItem[]) => void
+  onAdvance: (craft: CraftRecord, excessPieces: PlacedGridItem[]) => void,
+  onReturnToKitchen: () => void
 ): void {
   const placedItems = context.lastGridResult?.placedItems ?? [];
   const candidates = groupCandidatesByCategory(placedItems);
@@ -112,12 +114,14 @@ export function renderSynthesis(
 
     root.innerHTML = `
       <div class="phase-shell">
+        <div class="workbench-hero">${composeWorkshopBackground()}</div>
         <p class="phase-label">Run ${context.runNumber} · Tier ${context.tier} · Trip ${context.tripCount + 1}</p>
         <h1>Phase 2: Doc's Workbench</h1>
         <div class="bins">${binHtml}</div>
         ${previewHtml}
         ${fulfillmentHtml}
         <button id="advance-btn">Assemble Craft → Flight Sim</button>
+        <button id="return-to-kitchen-btn" class="secondary-btn">Not close yet? Return to Kitchen</button>
       </div>
     `;
 
@@ -147,6 +151,10 @@ export function renderSynthesis(
       const excessPieces = identifyExcessPieces(placedItems, selections);
       playAssemble();
       onAdvance(craft, excessPieces);
+    });
+
+    root.querySelector<HTMLButtonElement>("#return-to-kitchen-btn")!.addEventListener("click", () => {
+      onReturnToKitchen();
     });
   }
 

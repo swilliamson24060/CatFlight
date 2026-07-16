@@ -1,3 +1,4 @@
+import { setMusicTrack } from "../audio/music";
 import type { RunContext } from "../engine/runContext";
 import { summarizeBlueprintForDisplay } from "../render/categoryColors";
 import { ITEM_GLYPHS } from "../render/itemGlyphs";
@@ -59,6 +60,8 @@ export function renderKitchen(
   let message: string | null = null;
   let showBriefing = context.tripCount === 0;
   let opensRemaining = OPENS_PER_TRIP;
+
+  if (showBriefing) setMusicTrack("lab");
 
   function closeModal(): void {
     if (held) {
@@ -207,6 +210,7 @@ export function renderKitchen(
   function wireEvents(): void {
     root.querySelector<HTMLButtonElement>("#start-searching-btn")?.addEventListener("click", () => {
       showBriefing = false;
+      setMusicTrack("theme");
       draw();
     });
 
