@@ -31,8 +31,12 @@ export interface IntroHandle {
   replay: () => void;
 }
 
-export function mountIntro(container: HTMLElement): IntroHandle {
+/** `onClose` fires once, right after the intro's first auto-shown viewing this session ends
+ * (immediately, if the intro was already seen on a prior visit) -- used to chain the How to Play
+ * modal in right after, without the two overlays racing each other open at once. */
+export function mountIntro(container: HTMLElement, onClose?: () => void): IntroHandle {
   let index = 0;
+  let hasFiredCloseCallback = false;
 
   const overlay = document.createElement("div");
   overlay.id = "intro-overlay";
@@ -42,9 +46,16 @@ export function mountIntro(container: HTMLElement): IntroHandle {
   overlay.style.display = "none";
   container.appendChild(overlay);
 
+  function fireCloseCallbackOnce(): void {
+    if (hasFiredCloseCallback) return;
+    hasFiredCloseCallback = true;
+    onClose?.();
+  }
+
   function close(): void {
     overlay.style.display = "none";
     localStorage.setItem(SEEN_KEY, "1");
+    fireCloseCallbackOnce();
   }
 
   function advance(): void {
@@ -99,6 +110,8 @@ export function mountIntro(container: HTMLElement): IntroHandle {
 
   if (!localStorage.getItem(SEEN_KEY)) {
     open();
+  } else {
+    fireCloseCallbackOnce();
   }
 
   return { replay: open };

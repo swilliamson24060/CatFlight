@@ -6,6 +6,6 @@ import { mountIntro } from "./ui/intro";
 
 const root = document.querySelector<HTMLDivElement>("#app")!;
 mountApp(root);
-const intro = mountIntro(document.body);
-mountHowToPlay(document.body, () => intro.replay());
+const howToPlay = mountHowToPlay(document.body, () => intro.replay());
+const intro = mountIntro(document.body, () => howToPlay.maybeAutoOpen());
 mountAudioControls(document.body);

@@ -9,6 +9,7 @@ import {
   craftRecordToVisual,
 } from "../render/craftComposer";
 import { downloadDataUrl, svgToPngDataUrl } from "../render/exportImage";
+import { composeKitchenBackground, composeOutcomeImage } from "../render/kitchenShapes";
 import { evaluateFlight, type FlightGate, type FlightOutcome } from "../systems/flightSim";
 import { FUNCTIONAL_CATEGORIES } from "../types/core";
 import type { CraftRecord } from "../types/craft";
@@ -72,6 +73,7 @@ const REVEAL_CAPTIONS: Record<RevealPhase, string> = {
 };
 
 const REVEAL_STAGE_MS = 1100;
+const OUTCOME_IMAGE_DELAY_MS = 2000;
 
 /** Only spotlights parts that were actually collected -- skips straight past an empty category. */
 function buildRevealSequence(craft: CraftRecord): RevealPhase[] {
@@ -95,11 +97,20 @@ export function renderFlightSim(root: HTMLElement, context: RunContext, onAdvanc
   let outcome: FlightOutcome | null = null;
   let shareMessage: { text: string; ok: boolean } | null = null;
   let revealTimer: number | undefined;
+  let outcomeImageTimer: number | undefined;
+  let showOutcomeImage = false;
 
   function clearRevealTimer(): void {
     if (revealTimer !== undefined) {
       window.clearTimeout(revealTimer);
       revealTimer = undefined;
+    }
+  }
+
+  function clearOutcomeImageTimer(): void {
+    if (outcomeImageTimer !== undefined) {
+      window.clearTimeout(outcomeImageTimer);
+      outcomeImageTimer = undefined;
     }
   }
 
@@ -134,12 +145,22 @@ export function renderFlightSim(root: HTMLElement, context: RunContext, onAdvanc
           ${closeup ?? ""}
         </div>
       `;
+    } else if (phase === "revealed" && showOutcomeImage && outcome) {
+      craftHtml = `
+        <div class="craft-preview">
+          <div class="flight-stage">
+            ${composeKitchenBackground()}
+            <div class="outcome-reveal">${composeOutcomeImage(outcome.success)}</div>
+          </div>
+        </div>
+      `;
     } else {
       const fogTint = outcome ? (outcome.success ? "fog-success" : "fog-fail") : "";
       const fogState = phase === "animating" ? "animating" : phase === "revealed" ? "settled" : "";
       craftHtml = `
         <div class="craft-preview">
           <div class="flight-stage">
+            ${composeKitchenBackground()}
             <div class="flight-craft">${composeCraftLeanSvg(visual)}</div>
             <div class="flight-fog ${fogTint} ${fogState}"></div>
           </div>
@@ -207,6 +228,11 @@ export function renderFlightSim(root: HTMLElement, context: RunContext, onAdvanc
           phase = "revealed";
           if (outcome) playOutcomeSound(outcome);
           draw();
+          clearOutcomeImageTimer();
+          outcomeImageTimer = window.setTimeout(() => {
+            showOutcomeImage = true;
+            draw();
+          }, OUTCOME_IMAGE_DELAY_MS);
         },
         { once: true }
       );

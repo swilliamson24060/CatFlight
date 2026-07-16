@@ -384,6 +384,11 @@ th {
 
 .flight-craft {
   width: 45%;
+  position: relative;
+}
+
+.flight-craft svg {
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.35));
 }
 
 .flight-fog {
@@ -411,6 +416,24 @@ th {
   0% { opacity: 0; transform: scale(0.6); }
   60% { opacity: 1; transform: scale(1.05); }
   100% { opacity: 1; transform: scale(1); }
+}
+
+.outcome-reveal {
+  position: relative;
+  width: 85%;
+  animation: outcome-fade-in 0.5s ease-out;
+}
+
+.outcome-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.35));
+}
+
+@keyframes outcome-fade-in {
+  from { opacity: 0; transform: scale(0.94); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 .flying-status {
@@ -594,7 +617,7 @@ th {
   position: fixed;
   inset: 0;
   background: rgba(31, 46, 38, 0.55);
-  z-index: 200;
+  z-index: 350;
   align-items: center;
   justify-content: center;
   padding: 1rem;
@@ -634,6 +657,20 @@ th {
 
 .how-to-play-panel li strong {
   color: #2f5f45;
+}
+
+.skip-startup-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 1.5rem 1rem;
+  color: #2f5f45;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.skip-startup-label input {
+  cursor: pointer;
 }
 
 .how-to-play-panel button {

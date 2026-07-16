@@ -10,7 +10,14 @@ const HELP_HTML = `
   <p>Rare and uncommon color rolls give stat bonuses and show a &#9733; or &#10022; badge on the finished craft, independent of hue.</p>
 `;
 
-export function mountHowToPlay(container: HTMLElement, onReplayIntro: () => void): void {
+const SKIP_STARTUP_KEY = "catflight-howtoplay-skip-startup-v1";
+
+export interface HowToPlayHandle {
+  /** Opens the modal unless the player previously checked "don't show this automatically". */
+  maybeAutoOpen: () => void;
+}
+
+export function mountHowToPlay(container: HTMLElement, onReplayIntro: () => void): HowToPlayHandle {
   const button = document.createElement("button");
   button.id = "how-to-play-btn";
   button.type = "button";
@@ -26,27 +33,51 @@ export function mountHowToPlay(container: HTMLElement, onReplayIntro: () => void
   overlay.innerHTML = `
     <div class="how-to-play-panel">
       ${HELP_HTML}
+      <label class="skip-startup-label">
+        <input type="checkbox" id="skip-startup-checkbox" />
+        Don't show this automatically on startup
+      </label>
       <button id="replay-intro-btn" type="button">Watch Intro Again</button>
       <button id="how-to-play-close" type="button">Close</button>
     </div>
   `;
   container.appendChild(overlay);
 
-  overlay.querySelector<HTMLButtonElement>("#replay-intro-btn")!.addEventListener("click", () => {
-    overlay.style.display = "none";
-    onReplayIntro();
-  });
+  const skipCheckbox = overlay.querySelector<HTMLInputElement>("#skip-startup-checkbox")!;
 
   function setOpen(open: boolean): void {
+    if (open) {
+      skipCheckbox.checked = !!localStorage.getItem(SKIP_STARTUP_KEY);
+    }
     overlay.style.display = open ? "flex" : "none";
   }
 
+  function close(): void {
+    if (skipCheckbox.checked) {
+      localStorage.setItem(SKIP_STARTUP_KEY, "1");
+    } else {
+      localStorage.removeItem(SKIP_STARTUP_KEY);
+    }
+    setOpen(false);
+  }
+
+  overlay.querySelector<HTMLButtonElement>("#replay-intro-btn")!.addEventListener("click", () => {
+    close();
+    onReplayIntro();
+  });
+
   button.addEventListener("click", () => setOpen(true));
   overlay.addEventListener("click", (event) => {
-    if (event.target === overlay) setOpen(false);
+    if (event.target === overlay) close();
   });
-  overlay.querySelector<HTMLButtonElement>("#how-to-play-close")!.addEventListener("click", () => setOpen(false));
+  overlay.querySelector<HTMLButtonElement>("#how-to-play-close")!.addEventListener("click", close);
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") setOpen(false);
+    if (event.key === "Escape" && overlay.style.display !== "none") close();
   });
+
+  return {
+    maybeAutoOpen: () => {
+      if (!localStorage.getItem(SKIP_STARTUP_KEY)) setOpen(true);
+    },
+  };
 }
