@@ -46,17 +46,12 @@ export function renderKitchen(
   for (const active of layout) pendingReveals.set(active.source.id, [...active.reveals]);
   const searchedSourceIds = new Set<string>();
 
+  // Every trip starts with a blank grid -- pieces from a prior trip either got committed to a
+  // category at Doc's Workbench (and are counted there, see context.committedComponents) or were
+  // left behind for good.
   const pendingTray: KitchenPiece[] = [];
   const occupancy: Occupancy = createEmptyOccupancy(gridSize);
   const placedItems: PlacedGridItem[] = [];
-  for (const prior of context.lastGridResult?.placedItems ?? []) {
-    markOccupied(occupancy, prior.footprint, prior.origin, prior.instanceId);
-    placedItems.push(prior);
-  }
-
-  /** Pieces already assigned to a category at Doc's Workbench -- committed, so they can't be
-   * pulled back out of the grid on a return trip. */
-  const lockedInstanceIds = new Set<string>(Object.values(context.categorySelections ?? {}).flat());
 
   let held: HeldItem | null = null;
   let openSourceId: string | null = null;
@@ -142,11 +137,7 @@ export function renderKitchen(
         const glyph = ITEM_GLYPHS[item.template.id] ?? "";
         const colStart = item.origin.col + 1;
         const rowStart = item.origin.row + 1;
-        const locked = lockedInstanceIds.has(item.instanceId);
-        const label = locked
-          ? `${item.template.name}, already assigned to a category at Doc's Workbench`
-          : `${item.template.name}, pick back up`;
-        return `<button type="button" class="placed-item-shape${locked ? " locked" : ""}" data-instance="${item.instanceId}" style="grid-column: ${colStart} / span ${item.footprint.width}; grid-row: ${rowStart} / span ${item.footprint.height};" aria-label="${label}">${glyph}${locked ? '<span class="lock-badge">&#128274;</span>' : ""}</button>`;
+        return `<button type="button" class="placed-item-shape" data-instance="${item.instanceId}" style="grid-column: ${colStart} / span ${item.footprint.width}; grid-row: ${rowStart} / span ${item.footprint.height};" aria-label="${item.template.name}, pick back up">${glyph}</button>`;
       })
       .join("");
 
@@ -343,11 +334,6 @@ export function renderKitchen(
       shape.addEventListener("click", () => {
         if (held) return;
         const instanceId = shape.dataset.instance!;
-        if (lockedInstanceIds.has(instanceId)) {
-          message = "That piece is already assigned to a category at Doc's Workbench -- return there to free it up.";
-          draw();
-          return;
-        }
         const placedIdx = placedItems.findIndex((p) => p.instanceId === instanceId);
         if (placedIdx === -1) return;
         const placed = placedItems[placedIdx]!;

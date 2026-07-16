@@ -373,11 +373,6 @@ th {
   position: relative;
 }
 
-.grid .placed-item-shape.locked {
-  cursor: not-allowed;
-  filter: saturate(0.6) brightness(0.9);
-}
-
 .lock-badge {
   position: absolute;
   bottom: 1px;
@@ -515,6 +510,21 @@ th {
   background: #8bc9a8;
   border-color: #4c9a6f;
   font-weight: 600;
+}
+
+.committed-pill {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  width: 100%;
+  margin: 0 0 0.4rem;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.85rem;
+  border: 1px solid #4c9a6f;
+  border-radius: 4px;
+  background: #eaf5ef;
+  color: #2f5f45;
 }
 
 .phase-shell button:disabled {

@@ -14,14 +14,16 @@ export interface RunContext {
   blueprint: Blueprint;
   /** How many kitchen trips have been taken on the current blueprint; resets to 0 on success. */
   tripCount: number;
+  /** This trip's scavenged haul only -- the grid always starts blank on a new trip. */
   lastGridResult?: GridResult;
   /** Pieces left over after the last Doc's Workbench assembly; persists across retries. */
   excessPieces?: PlacedGridItem[];
   craft?: CraftRecord;
   lastFlightOutcome?: FlightOutcome;
-  /** Doc's Workbench category assignments, kept so a trip back to the kitchen doesn't lose them.
-   * Pieces referenced here are locked in the grid -- committed to a category, not removable. */
-  categorySelections?: Partial<Record<PieceCategory, string[]>>;
+  /** Pieces already committed to each category at Doc's Workbench, accumulated across every trip
+   * on this blueprint. Once a piece is added here it's off the grid for good -- the grid resets
+   * every trip, so this is the durable record of blueprint progress. */
+  committedComponents?: Partial<Record<PieceCategory, PlacedGridItem[]>>;
 }
 
 export function createInitialRunContext(): RunContext {
