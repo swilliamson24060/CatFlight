@@ -1,29 +1,50 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { evaluateFlight } from "./flightSim";
 
 describe("evaluateFlight", () => {
-  it("fails at launch when fulfillment is below 40%", () => {
-    const outcome = evaluateFlight(0.2);
-    expect(outcome).toMatchObject({ success: false, gatesCleared: 0, failedAt: "launch", landingMissReason: null });
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
-  it("fails at midflight between 40% and 70% fulfillment", () => {
-    const outcome = evaluateFlight(0.5);
-    expect(outcome).toMatchObject({ success: false, gatesCleared: 1, failedAt: "midflight", landingMissReason: null });
+  it("always succeeds at 100% fulfillment (roll can never exceed it)", () => {
+    for (let i = 0; i < 200; i++) {
+      expect(evaluateFlight(1).success).toBe(true);
+    }
   });
 
-  it("misses landing (undershoot) between 70% and 100% fulfillment", () => {
-    const outcome = evaluateFlight(0.9);
-    expect(outcome).toMatchObject({ success: false, gatesCleared: 2, failedAt: "landing", landingMissReason: "undershoot" });
+  it("succeeds when the roll lands at or below the fulfillment ratio", () => {
+    vi.spyOn(Math, "random").mockReturnValue(0.5);
+    expect(evaluateFlight(0.6).success).toBe(true);
+    expect(evaluateFlight(0.5).success).toBe(true);
   });
 
-  it("succeeds at full (100%) fulfillment", () => {
-    const outcome = evaluateFlight(1);
-    expect(outcome).toMatchObject({ success: true, gatesCleared: 3, failedAt: null, landingMissReason: null });
+  it("fails when the roll lands above the fulfillment ratio", () => {
+    vi.spyOn(Math, "random").mockReturnValue(0.5);
+    expect(evaluateFlight(0.49).success).toBe(false);
   });
 
-  it("treats each threshold boundary as inclusive of the better band", () => {
-    expect(evaluateFlight(0.4).failedAt).toBe("midflight");
-    expect(evaluateFlight(0.7).failedAt).toBe("landing");
+  it("picks failure flavor/gatesCleared from the fulfillment band, not the roll", () => {
+    vi.spyOn(Math, "random").mockReturnValue(0.99);
+    expect(evaluateFlight(0.2)).toMatchObject({ success: false, gatesCleared: 0, failedAt: "launch", landingMissReason: null });
+    expect(evaluateFlight(0.5)).toMatchObject({ success: false, gatesCleared: 1, failedAt: "midflight", landingMissReason: null });
+    expect(evaluateFlight(0.9)).toMatchObject({ success: false, gatesCleared: 2, failedAt: "landing", landingMissReason: "undershoot" });
+  });
+
+  it("a successful roll always reports all 3 gates cleared", () => {
+    vi.spyOn(Math, "random").mockReturnValue(0.1);
+    expect(evaluateFlight(0.5)).toMatchObject({ success: true, gatesCleared: 3, failedAt: null, landingMissReason: null });
+  });
+
+  it("success rate roughly tracks the fulfillment ratio over many rolls", () => {
+    const trials = 2000;
+    for (const ratio of [0.2, 0.5, 0.8]) {
+      let successes = 0;
+      for (let i = 0; i < trials; i++) {
+        if (evaluateFlight(ratio).success) successes++;
+      }
+      const rate = successes / trials;
+      expect(rate).toBeGreaterThan(ratio - 0.07);
+      expect(rate).toBeLessThan(ratio + 0.07);
+    }
   });
 });

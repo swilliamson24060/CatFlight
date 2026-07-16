@@ -74,12 +74,11 @@ export function renderFlightSim(root: HTMLElement, context: RunContext, onAdvanc
     const craftHtml = craft
       ? `<div class="craft-preview">
            <div class="flight-stage"><div class="flight-craft ${animClass}">${composeCraftSvg(craftRecordToVisual(craft))}</div></div>
-         </div>
-         <p>Stats: Thrust ${craft.stats.thrust.toFixed(1)} &middot; Weight ${craft.stats.weight.toFixed(1)} &middot; Drag ${craft.stats.drag.toFixed(1)} &middot; Durability ${craft.stats.durability.toFixed(1)}</p>`
+         </div>`
       : `<p><em>No craft assembled.</em></p>`;
 
     const thresholdsHtml = craft
-      ? `<p>Blueprint fulfillment: ${Math.round(craft.fulfillmentRatio * 100)}% — 100% is a guaranteed clean flight.</p>`
+      ? `<p>Blueprint fulfillment: ${Math.round(craft.fulfillmentRatio * 100)}% — that's your odds of a clean flight.</p>`
       : "";
 
     let actionHtml = "";
